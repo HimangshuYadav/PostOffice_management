@@ -11,6 +11,7 @@ from pyfiglet import figlet_format
 from datetime import datetime
 
 UID_List=[]
+SID_List=[]
 SEmail_List=[]
 AID_List=[]
 PID_List=[]
@@ -152,7 +153,8 @@ def menu():
         clear_screen()
         Login_Staff()
     elif role==3:
-        pass
+        clear_screen()
+        Admin_Menu()
     elif role==0:
         pass
     else:
@@ -340,8 +342,13 @@ def Staff_Menu():
         clear_screen()
         Complaint_menu()
     elif opt==0:
-        #TODO change current user to ""
-        pass
+        clear_screen()
+        menu()
+    else:
+        print("Invaild Input\nTry again")
+        next=input()
+        clear_screen()
+        Staff_Menu()
 
 def parcel_management_menu():
     print("[1]Register a New Parcel")
@@ -482,8 +489,6 @@ def Customer_service_menu():
         clear_screen()
         Customer_service_menu()
 
-
-    
 def Complaint_menu():
     print("[1]Register New Complaint")
     print("[2]View All Complaints")
@@ -535,12 +540,16 @@ def Admin_Menu():
     print("[6]Logout")
     opt=int(input("Enter option :"))
     if opt==1:
+        clear_screen()
         staff_management_menu()
     elif opt==2:
+        clear_screen()
         Customer_Management_menu()
     elif opt==3:
+        clear_screen()
         Finance_menu()
     elif opt==4:
+        clear_screen()
         Inventory_menu()
     elif opt==5:
         pass
@@ -548,19 +557,62 @@ def Admin_Menu():
         pass
  
 def Register_Staff():
+    get_Lists("email",SEmail_List,"staff_details")
     email=input("Enter Employye's Email")
-    if email in Email_List:#TODO check this and adjust the code
-        print("User already exist...moving to login page..")
-        login_Customer()
+    if email in SEmail_List:#TODO check this and adjust the code
+        print("User already exist...Try Again\nPress ENTER to Continue")
+        input()
+        clear_screen()
+        Register_Staff()
     else:
         password=input("Enter Password :")
-        name=input("What should we call you??? :")
+        name=input("Enter the name of Employee :")
         print("This is your UserId")
-        #TODO function to take last UId and add 1 to to create new UID
+        SID=get_UID("staff_details","SID")
+        cursor.execute("insert into staff_details values(%s,%s,%s,%s)",(SID,password,name,email))
+        mydb.commit()
+        print("Press ENTER to continue")
+        input()
+        clear_screen()
+        Admin_Menu()
         
 def Update_Staff():
-    print("What you want to update")
-    #TODO Check here after database is created
+    get_Lists("SID",SID_List,"staff_details")
+    SId=int(input("Enter the Staff ID :"))
+    if SId not in SID_List:
+        print("No Staff found with SID",SId,"\nTry Again\nPress ENTER to Continue")
+        input()
+        clear_screen()
+        Update_Staff()
+        
+    else:
+        cursor.execute(f"select * from staff_details where SID={SId};")
+        data=cursor.fetchone()
+        print(data)
+        print(tabulate([data],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
+        opt=input("Do you want to update this ???(y/n)")
+        if opt.upper() =="Y":
+            print("[1]Email")
+            print("[2]Name")
+            #TODO Add more details in staff details
+            inp=input("Enter your option :")
+            if inp=="1":
+                New_Email=input("Enter new email :")
+                try:
+                    cursor.execute("update staff_details set email=%s where SID=%s",(New_Email,SId))
+                    mydb.commit()
+                    print("Updation Successful\nPress ENTER to Continue")
+                    input()
+                    clear_screen()
+                    Admin_Menu()
+                    
+                except Exception as e:
+                    print("Updation Unsuccessful\nTry again\Press ENTER to Continue")
+                    print(e)
+                    input()
+                    clear_screen()
+                    Update_Staff()
+
         
 def staff_management_menu():    
     print("[1]Register New Staff Member")
