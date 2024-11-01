@@ -94,6 +94,9 @@ def calculate_parcel_cost(distance_km : float, weight_g : float):
     cost = 10+rate_per_km * distance_km
     return ceil(cost/100)
 
+def title():
+    print(Fore.RED+figlet_format("INDIA POST",font="standard",justify="center"),Style.RESET_ALL)
+
 '''
 Tables to be made:
 Customer details
@@ -118,7 +121,7 @@ Finance
 '''
 
 def menu():
-    print(figlet_format("INDIA POST",font="standard",justify="center"))
+    title()
     print(figlet_format("Role",font="mini"))
     print("[1]Customer")
     print("[2]Staff")
@@ -151,7 +154,7 @@ def Auth_Customer():
         Auth_Customer()
     
 def login_Customer():
-    print(figlet_format("INDIA POST",font="standard",justify="center"))
+    title()
     print(figlet_format("Login",font="mini"))
     get_Lists("email",Email_List)
     email=input("Enter your email : ")
@@ -184,7 +187,7 @@ def login_Customer():
 
     
 def Register_Customer():
-    print(figlet_format("INDIA POST",font="standard",justify="center"))
+    title()
     print(figlet_format("Register",font="mini"))
     get_Lists("email",Email_List)
     email=input("Enter Your Email")
@@ -222,7 +225,7 @@ def Login_Admin():
         #TODO password check
         
 def Customer_Menu():
-    print(figlet_format("INDIA POST",font="standard",justify="center"))
+    title()
     print(figlet_format("Menu",font="mini"))
     print("[1]Track")
     print("[2]Locate post office") #Not sure how to make it work
@@ -231,7 +234,7 @@ def Customer_Menu():
     print("")#TODO more features
     opt=int(input("Enter option :"))
     if opt==1:
-        print(figlet_format("INDIA POST",font="standard",justify="center"))
+        clear_screen()
         print(figlet_format("Track",font="mini"))
         track_parcel()
         print("PRESS Enter to continue!!!")
@@ -239,7 +242,7 @@ def Customer_Menu():
         clear_screen()
         Customer_Menu()
     elif opt==2:
-        print(figlet_format("INDIA POST",font="standard",justify="center"))
+        clear_screen()
         print(figlet_format("Locate Post Office",font="mini"))
         district=input("Enter District:")
         nearest__po=nearest_po(district)
@@ -257,7 +260,7 @@ def Customer_Menu():
             
         
     elif opt==3:
-        print(figlet_format("INDIA POST",font="standard",justify="center"))
+        clear_screen()
         print(figlet_format("Postage Calculator",font="mini"))
         mass=float(input("Enter weight of your parcel(in grams) : "))
         sender=input("Enter your address")
