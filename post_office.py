@@ -2,12 +2,13 @@ import mysql.connector as con
 import csv
 from geopy.geocoders import Nominatim
 from geopy.distance import distance
-from math import ceil
+from math import ceil,floor
 from tabulate import tabulate
 import os
 import time
 from colorama import Fore,Style
 from pyfiglet import figlet_format
+from datetime import datetime
 
 UID_List=[]
 SEmail_List=[]
@@ -31,10 +32,15 @@ def get_Lists(string:str,to_List:list,from_table:str):
             for info in i:
                 to_List.append(info)
         
+def next_line(text, line_length=50):
+    return '\n'.join(text[i:i + line_length] for i in range(0, len(text), line_length))
  
-def get_UID():
-    cursor.execute("select UID from customer order by UID desc;")
-    return int(cursor.fetchone()[0])+1
+def get_UID(table:str,ID:str):
+    cursor.execute(f"select {ID} from {table} order by {ID} desc;")
+    try:
+        return int(cursor.fetchone()[0])+1
+    except:
+        return 1
     
 def track_parcel(info:tuple,Update=False):
     try:
@@ -131,29 +137,6 @@ def calculate_parcel_cost(distance_km : float, weight_g : float):
 def title():
     print(Fore.RED+figlet_format("INDIA POST",font="standard",justify="center"),Style.RESET_ALL)
 
-'''
-Tables to be made:
-Customer details
-UID(PK),name,email,password,history
-
-staff details
-SID(PK),name,SEmail,password
-
-Admin details
-AID(PK),name,password
-
-parcel details
-parcel_ID(PK),user,in_transit, out_for_delivery,delivered,returned,to,from
-
-Inventory
-
-Complaint
-CID(PK),complaint,date of complaint
-
-Finance
-
-'''
-
 def menu():
     title()
     print(figlet_format("Role",font="mini"))
@@ -175,7 +158,7 @@ def menu():
     else:
         print("INVAILD INPUT TRY AGAIN")
         menu()
-        
+     
 def Auth_Customer():
     new=input("you are New user???(y/n)")
     if new=="y":
@@ -187,7 +170,7 @@ def Auth_Customer():
     else:
         print("Invaild Input...try again")
         Auth_Customer()
-    
+
 def login_Customer():
     title()
     print(figlet_format("Login",font="mini"))
@@ -220,8 +203,6 @@ def login_Customer():
                 clear_screen()
                 menu()
                 #TODO 3 attempt thing is not working come here again
-
-    
 def Register_Customer():
     title()
     print(figlet_format("Register",font="mini"))
@@ -233,7 +214,7 @@ def Register_Customer():
     else:
         password=input("Enter Password :")
         name=input("What should we call you??? :")
-        Userid=get_UID()
+        Userid=get_UID("customer","UID")
         print("This is your UserId:",Userid)
         while cursor.nextset():
             cursor.fetchall()
@@ -272,8 +253,7 @@ def Login_Staff():
                 clear_screen()
                 menu()
                 #TODO attempts method
-                
-        
+   
 def Login_Admin():
     AID=input("Enter Admin Id")
     if AID not in AID_List:
@@ -282,7 +262,7 @@ def Login_Admin():
     else:
         password=input("Enter password")
         #TODO password check
-        
+  
 def Customer_Menu():
     title()
     print(figlet_format("Menu",font="mini"))
@@ -343,14 +323,11 @@ def Customer_Menu():
         time.sleep(2)
         clear_screen()
         Customer_Menu()
-        
 
 def Staff_Menu():
     print("[1]Parcel Management")
     print("[2]Customer Services")
-    print("[3]Inventory Management")
-    print("[4]Complaint and Query Management")
-    print("[5]Daily Summaries")
+    print("[3]Complaint and Query Management")
     print("[0]Logout")
     opt=int(input("Enter option :"))
     if opt==1:
@@ -361,18 +338,11 @@ def Staff_Menu():
         Customer_service_menu()
     elif opt==3:
         clear_screen()
-        Inventory_Management_menu()
-    elif opt==4:
-        clear_screen()
         Complaint_menu()
-    elif opt==5:
-        pass
     elif opt==0:
         #TODO change current user to ""
         pass
-    
-    
-    
+
 def parcel_management_menu():
     print("[1]Register a New Parcel")
     print("[2]Update Parcel Status")
@@ -477,51 +447,84 @@ def parcel_management_menu():
                 parcel_management_menu()
             else:
                 print("No data found!!!")
+                print("PRESS Enter to continue!!!")
                 next=input()
                 clear_screen()
                 parcel_management_menu()
-    
-    
+
 def Customer_service_menu():
     print("[1]Register New Customer")
     print("[2]Search Customer by ID or Name")
-    print("[3]View Customer History")
     opt=int(input("Enter option :"))
     if opt==1:
         Register_Customer()
     elif opt==2:
-        UID=input("Enter User ID :")
-        #TODO search user 
-    elif opt==3:
-        #TODO something to show user history
-        pass
-    
-    
-def Inventory_Management_menu():
-    print("[1]Check Inventory")
-    print("[2]Update Inventory Levels")
-    opt=int(input("Enter option :"))
-    if opt==1:
-        pass
-    elif opt==2:
-        pass
+        UID=input("Enter User ID or email:")
+        cursor.execute("select * from customer where UID=%s or email=%s;",(UID,UID))
+        info=cursor.fetchall()
+        if len(info)!=0:
+            print(tabulate(info,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+            print("PRESS Enter to continue!!!")
+            next=input()
+            clear_screen()
+            Customer_service_menu()
+        else:
+            print("No User found!!!")
+            print("PRESS Enter to continue!!!")
+            next=input()
+            clear_screen()
+            Customer_service_menu()
+            
+    else:
+        print("INVAILD INPUT")
+        print("PRESS Enter to continue!!!")
+        next=input()
+        clear_screen()
+        Customer_service_menu()
+
+
     
 def Complaint_menu():
     print("[1]Register New Complaint")
-    print("[2]Update Complaint Status")
-    print("[3]View All Complaints")
-    print("[4]Search Complaints by Customer ID")
+    print("[2]View All Complaints")
+    print("[3]Search Complaints by Customer ID")
     opt=int(input("Enter option :"))
     if opt==1:
-        pass
+        CID=get_UID("complaint","CID")
+        complainant=input("Enter complainant's name :")
+        complainant_ID=input("Enter complainant's ID :")
+        Complaint=next_line(input("Enter his Complaint :"))
+        date = datetime.now().strftime('%Y-%m-%d')
+        cursor.reset()
+        try:
+            cursor.execute("insert into complaint values(%s,%s,%s,%s,%s);",(CID,complainant,complainant_ID,Complaint,date))
+            mydb.commit()
+            print("Complaint Filed successfully!!!\nPress Enter to continue")
+            next=input()
+            clear_screen()
+            Complaint_menu()
+        except Exception:
+            print("Compalint too Long")
+            print("Press ENTER to continue!!")
+            next=input()
+            clear_screen()
+            Complaint_menu()
+        
     elif opt==2:
-        pass
+        cursor.execute("select complainant_ID,complainant_name,complaint,date_of_complaint from complaint;")#TODO change issuer ro complainant
+        data=cursor.fetchall()
+        if len(data)!=0:
+            print(tabulate(data,["Complainant ID","Complainant","Complaint","Date of complaint"],tablefmt="fancy_grid"))
+        else:
+            print("No complaint found!!!")
+        print("Press ENTER to continue")
+        next=input()
+        clear_screen()
+        Complaint_menu()
     elif opt==3:
         pass
-    elif opt==4:
+    else:
         pass
-    
-    
 
 def Admin_Menu():
     print("[1]Staff management")
@@ -575,8 +578,7 @@ def staff_management_menu():
     elif opt==4:
         SID=input("Enter SID")
         #TODO password check of admin and then delete staff
-    
-    
+ 
 def Customer_Management_menu():
     print("[1]View and Manage Customer Records")
     print("[2]Delete Customer Data")
@@ -588,7 +590,6 @@ def Customer_Management_menu():
         pass
     elif opt==3:
         pass
-    
 
 def Finance_menu():
     print("[1]Access All Payment Records")
