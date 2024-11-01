@@ -36,31 +36,63 @@ def get_UID():
     cursor.execute("select UID from customer order by UID desc;")
     return int(cursor.fetchone()[0])+1
     
-def track_parcel():
-    PID=input("Enter parcel ID :")
-    cursor.execute(f"select * from parcel_details where PID={PID}")
-    info=cursor.fetchone()
+def track_parcel(info:tuple,Update=False):
     try:
-        if info[2]==0:
+        if info[1]==0:
             #kuch nahi
             print("[IN TRANSIT]       [OUT FOR DELIVERY]       [DELIVERD]")
             
-        elif info[2]==1 and info[3]==0 and info[4]==0 and info[5]==0 :
+        if info[1]==1 and info[2]==0 and info[3]==0 and info[4]==0 :
             #in transit
             print(Fore.GREEN+f"[IN TRANSIT]{Style.RESET_ALL}====   [OUT FOR DELIVERY]       [DELIVERD]")
             
-        elif info[2]==1 and info[3]==1 and info[4]==0 and info[5]==0  :
+        if info[1]==1 and info[2]==1 and info[3]==0 and info[4]==0  :
             #out for delivery
             print(f"{Fore.GREEN}[IN TRANSIT]{Style.RESET_ALL}======={Fore.GREEN}[OUT FOR DELIVERY]{Style.RESET_ALL}==     [DELIVERD]")
             
-        elif info[2]==1 and info[3]==1 and info[4]==1 and info[5]==0 :
+        if info[1]==1 and info[2]==1 and info[3]==1 and info[4]==0 :
             #delivered
             print(f"{Fore.GREEN}[IN TRANSIT]{Style.RESET_ALL}======={Fore.GREEN}[OUT FOR DELIVERY]{Style.RESET_ALL}======={Fore.GREEN}[DELIVERD]{Style.RESET_ALL}")
             
-        elif info[2]==1 and info[3]==1 and info[4]==1 and info[5]==1 :
+        if info[1]==1 and info[2]==1 and info[3]==1 and info[4]==1 :
             #returned
             print(f"{Fore.GREEN}[IN TRANSIT]{Style.RESET_ALL}======={Fore.GREEN}[OUT FOR DELIVERY]{Style.RESET_ALL}========{Fore.GREEN}[DELIVERD]{Style.RESET_ALL}======={Fore.RED}[RETURNED]{Style.RESET_ALL}")
+        if Update==True:
             
+            updated_status=list(info)
+            opt=input("Do you want to Update???(y/n) :")
+            if opt.upper()=="Y":
+                print("Current Status")
+                print("[1]In Transit")  
+                print("[2]Out For Delivery")  
+                print("[3]Deliverd")  
+                print("[4]Returned")
+                status=input()
+                if status=="1":
+                    updated_status[1],updated_status[2],updated_status[3],updated_status[4]=[1,0,0,0]
+                elif status=="2":
+                    updated_status[1],updated_status[2],updated_status[3],updated_status[4]=[1,1,0,0]
+                elif status=="3":
+                    updated_status[1],updated_status[2],updated_status[3],updated_status[4]=[1,1,1,0]
+                elif status=="4":
+                   updated_status[1],updated_status[2],updated_status[3],updated_status[4]=[1,1,1,1]
+                else:
+                    print("Invaild Input!!!\n Try Again")
+                    time.sleep(2)
+                    clear_screen()
+                    track_parcel(info,Update)
+                updated_status.append(updated_status[0])
+                print(updated_status)
+                cursor.execute("update parcel_details set PID=%s,in_transit=%s,out_for_delivery=%s,delivered=%s,returned=%s,sender_add=%s,reciever_add=%s where PID=%s", updated_status)
+                mydb.commit()
+                print("Updated!!!\nPress Enter to Continue")
+                inp=input()
+                clear_screen()
+                parcel_management_menu()
+            if opt.upper()=="N":
+                clear_screen()
+                parcel_management_menu()
+             
     except TypeError:
         print("INVAILD Parcel ID \nTry Again!!!")
         time.sleep(2)
@@ -232,7 +264,7 @@ def Login_Staff():
                 print("Incorrect Password...try again")
                 time.sleep(2)
                 clear_screen()
-                login_Customer()
+                Login_Staff()
             else:
                 print("3 Unsuccessful Attempts")
                 print("moving to main menu")
@@ -263,7 +295,10 @@ def Customer_Menu():
     if opt==1:
         clear_screen()
         print(figlet_format("Track",font="mini"))
-        track_parcel()
+        PID=int(input("Enter parcel ID :"))
+        cursor.execute(f"select * from parcel_details where PID={PID}")
+        info=cursor.fetchone()
+        track_parcel(info)
         print("PRESS Enter to continue!!!")
         next=input()
         clear_screen()
@@ -361,24 +396,90 @@ def parcel_management_menu():
         Staff_Menu()
         
     elif opt==2:
-        PID=input("Enter parcel ID :")
+        get_Lists("PID",PID_List,"parcel_details")
+        PID=int(input("Enter parcel ID :"))
         if PID not in PID_List:
-            print("INCORRECT ID")
-            #TODO try again (get this thing in a funtion)
+            print("INCORRECT ID\nTry again!!!")
+            time.sleep(2)
+            clear_screen()
+            parcel_management_menu()
         else:
-            print("")
-            #TODO menu to show status like in transit,delivered etc
+            cursor.execute(f"select * from parcel_details where PID ={PID}")
+            info=cursor.fetchone()
+            print(info)
+            track_parcel(info,True)
     elif opt==3:
-        PID=input("Enter parcel ID :")
-        if PID not in PID_List:
-            print("INCORRECT ID")
-            #TODO try again (get this thing in a funtion)
-        else:
-            print("")
-            #TODO show details
+        PID=int(input("Enter parcel ID :"))
+        cursor.execute(f"select * from parcel_details where PID={PID}")
+        info=cursor.fetchone()
+        track_parcel(info)
+        print("PRESS Enter to continue!!!")
+        next=input()
+        clear_screen()
+        parcel_management_menu()
     elif opt==4:
-        #TODO 
-        pass
+        print("[1]In Transit")
+        print("[2]Out for Delivery")
+        print("[3]Deliverd")
+        print("[3]Returned")
+        inp=(input("Enter option :"))
+        if inp=="1":
+            cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=false and delivered=false and returned=false")
+            out=cursor.fetchall()
+            if len(out)!=0:
+                print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+                print("PRESS Enter to continue!!!")
+                next=input()
+                clear_screen()
+                parcel_management_menu()
+            else:
+                print("No data found!!!")
+                next=input()
+                clear_screen()
+                parcel_management_menu()
+                
+        elif inp=="2":
+            cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=false and returned=false")
+            out=cursor.fetchall()
+            if len(out)!=0:
+                print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+                print("PRESS Enter to continue!!!")
+                next=input()
+                clear_screen()
+                parcel_management_menu()
+            else:
+                print("No data found!!!")
+                next=input()
+                clear_screen()
+                parcel_management_menu()
+        if inp=="3":
+            cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=true and returned=false")
+            out=cursor.fetchall()
+            if len(out)!=0:
+                print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+                print("PRESS Enter to continue!!!")
+                next=input()
+                clear_screen()
+                parcel_management_menu()
+            else:
+                print("No data found!!!")
+                next=input()
+                clear_screen()
+                parcel_management_menu()
+        if inp=="4":
+            cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=true and returned=true")
+            out=cursor.fetchall()
+            if len(out)!=0:
+                print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+                print("PRESS Enter to continue!!!")
+                next=input()
+                clear_screen()
+                parcel_management_menu()
+            else:
+                print("No data found!!!")
+                next=input()
+                clear_screen()
+                parcel_management_menu()
     
     
 def Customer_service_menu():
