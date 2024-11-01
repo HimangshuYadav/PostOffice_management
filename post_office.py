@@ -10,7 +10,7 @@ from colorama import Fore,Style
 from pyfiglet import figlet_format
 
 UID_List=[]
-SID_List=[]
+SEmail_List=[]
 AID_List=[]
 PID_List=[]
 Email_List=[]
@@ -23,9 +23,9 @@ cursor.execute("use postoffice_test;")
 def clear_screen():
     os.system('cls')
 
-def get_Lists(string:str,to_List:list):
+def get_Lists(string:str,to_List:list,from_table:str):
     if len(to_List)==0:
-        cursor.execute(f"select {string} from customer")
+        cursor.execute(f"select {string} from {from_table}")
         result=cursor.fetchall()
         for i in result:
             for info in i:
@@ -63,6 +63,8 @@ def track_parcel():
             
     except TypeError:
         print("INVAILD Parcel ID \nTry Again!!!")
+        time.sleep(2)
+        clear_screen()
         Customer_Menu()
         
      
@@ -103,13 +105,13 @@ Customer details
 UID(PK),name,email,password,history
 
 staff details
-SID(PK),name,
+SID(PK),name,SEmail,password
 
 Admin details
 AID(PK),name,password
 
 parcel details
-parcel_ID(PK),user,in_transit, out_for_delivery,delivered,returned
+parcel_ID(PK),user,in_transit, out_for_delivery,delivered,returned,to,from
 
 Inventory
 
@@ -132,7 +134,8 @@ def menu():
         clear_screen()
         Auth_Customer()
     elif role==2:
-        pass
+        clear_screen()
+        Login_Staff()
     elif role==3:
         pass
     elif role==0:
@@ -156,7 +159,7 @@ def Auth_Customer():
 def login_Customer():
     title()
     print(figlet_format("Login",font="mini"))
-    get_Lists("email",Email_List)
+    get_Lists("email",Email_List,"customer")
     email=input("Enter your email : ")
     if email not in Email_List:
         print("No User Found with email",email,"\nTry Again!!!")
@@ -184,12 +187,13 @@ def login_Customer():
                 time.sleep(3)
                 clear_screen()
                 menu()
+                #TODO 3 attempt thing is not working come here again
 
     
 def Register_Customer():
     title()
     print(figlet_format("Register",font="mini"))
-    get_Lists("email",Email_List)
+    get_Lists("email",Email_List,"customer")
     email=input("Enter Your Email")
     if email in Email_List:
         print("User already exist...moving to login page..")
@@ -207,13 +211,36 @@ def Register_Customer():
         #TODO in the org database name column should be inserted and a variable name is to be inserted in it
 
 def Login_Staff():
-    SID=input("Enter your staff ID :")
-    if SID not in SID_List:
-        print("Incorrect SID...try again")
+    get_Lists("email",SEmail_List,"staff_details")
+    Email=input("Enter your Employee Email :")
+    if Email not in SEmail_List:
+        print(SEmail_List)
+        print("Incorrect Email...try again")
+        time.sleep(2)
+        clear_screen()
         Login_Staff()
     else:
-        password=input("Enter password :")
-        #TODO password check
+        cursor.execute(f"select password from staff_details where email ='{Email}'")
+        user_password=cursor.fetchone()[0]
+        password=input("Enter password : ")
+        if user_password==password:
+            clear_screen()
+            Staff_Menu()
+        else:
+            # attempts+=1
+            if attempts<=3:
+                print("Incorrect Password...try again")
+                time.sleep(2)
+                clear_screen()
+                login_Customer()
+            else:
+                print("3 Unsuccessful Attempts")
+                print("moving to main menu")
+                time.sleep(3)
+                clear_screen()
+                menu()
+                #TODO attempts method
+                
         
 def Login_Admin():
     AID=input("Enter Admin Id")
@@ -279,6 +306,7 @@ def Customer_Menu():
     else:
         print("INVAILD INPUT\ntry again...")
         time.sleep(2)
+        clear_screen()
         Customer_Menu()
         
 
@@ -288,19 +316,23 @@ def Staff_Menu():
     print("[3]Inventory Management")
     print("[4]Complaint and Query Management")
     print("[5]Daily Summaries")
-    print("[6]Logout")
+    print("[0]Logout")
     opt=int(input("Enter option :"))
     if opt==1:
+        clear_screen()
         parcel_management_menu()
     elif opt==2:
+        clear_screen()
         Customer_service_menu()
     elif opt==3:
+        clear_screen()
         Inventory_Management_menu()
     elif opt==4:
+        clear_screen()
         Complaint_menu()
     elif opt==5:
         pass
-    elif opt==6:
+    elif opt==0:
         #TODO change current user to ""
         pass
     
@@ -313,8 +345,21 @@ def parcel_management_menu():
     print("[4]View All Parcels by Status")
     opt=int(input("Enter option :"))
     if opt==1:
-        #TODO take all the details and last PID and add 1 to it get the new ID
-        pass
+        To=input("Enter Recievers Address :")
+        From=input("Enter Senders Address :")
+        cursor.execute("select PID from parcel_details order by PID desc;")
+        last_PID=cursor.fetchone()[0]
+        current_PID=last_PID+1
+        print("Parcel ID :",current_PID)
+        while cursor.nextset():
+            cursor.fetchall()
+        cursor.execute("insert into parcel_details values(%s,false,false,false,false,%s,%s);",(current_PID,From,To))
+        mydb.commit()
+        print("Press Enter To Continue!!!")
+        input()
+        clear_screen()
+        Staff_Menu()
+        
     elif opt==2:
         PID=input("Enter parcel ID :")
         if PID not in PID_List:
