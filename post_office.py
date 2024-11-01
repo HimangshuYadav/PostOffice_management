@@ -2,7 +2,7 @@ import mysql.connector as con
 import csv
 from geopy.geocoders import Nominatim
 from geopy.distance import distance
-from math import ceil
+from math import ceil,floor
 from tabulate import tabulate
 import os
 import time
@@ -32,10 +32,15 @@ def get_Lists(string:str,to_List:list,from_table:str):
             for info in i:
                 to_List.append(info)
         
+def next_line(text, line_length=50):
+    return '\n'.join(text[i:i + line_length] for i in range(0, len(text), line_length))
  
-def get_UID(table:str):
-    cursor.execute(f"select UID from customer order by {table} desc;")
-    return int(cursor.fetchone()[0])+1
+def get_UID(table:str,ID:str):
+    cursor.execute(f"select {ID} from {table} order by {ID} desc;")
+    try:
+        return int(cursor.fetchone()[0])+1
+    except:
+        return 1
     
 def track_parcel(info:tuple,Update=False):
     try:
@@ -209,7 +214,7 @@ def Register_Customer():
     else:
         password=input("Enter Password :")
         name=input("What should we call you??? :")
-        Userid=get_UID("customer")
+        Userid=get_UID("customer","UID")
         print("This is your UserId:",Userid)
         while cursor.nextset():
             cursor.fetchall()
@@ -485,22 +490,31 @@ def Complaint_menu():
     print("[3]Search Complaints by Customer ID")
     opt=int(input("Enter option :"))
     if opt==1:
-        CID=get_UID("complaint")
+        CID=get_UID("complaint","CID")
         complainant=input("Enter complainant's name :")
         complainant_ID=input("Enter complainant's ID :")
-        Complaint=input("Enter his Complaint :")
+        Complaint=next_line(input("Enter his Complaint :"))
         date = datetime.now().strftime('%Y-%m-%d')
-        cursor.execute("insert into complaint values(%s,%s,%s,%s,%s),",(CID,complainant,complainant_ID,Complaint,date))
-        mydb.commit()
-        print("Complaint Filed successfully!!!\nPress Enter to continue")
-        next=input()
-        clear_screen()
-        Complaint_menu()
+        cursor.reset()
+        try:
+            cursor.execute("insert into complaint values(%s,%s,%s,%s,%s);",(CID,complainant,complainant_ID,Complaint,date))
+            mydb.commit()
+            print("Complaint Filed successfully!!!\nPress Enter to continue")
+            next=input()
+            clear_screen()
+            Complaint_menu()
+        except Exception:
+            print("Compalint too Long")
+            print("Press ENTER to continue!!")
+            next=input()
+            clear_screen()
+            Complaint_menu()
+        
     elif opt==2:
-        cursor.execute("select issuer_name,complaint,date_of_complaint from complaint;")#TODO change issuer ro complainant
+        cursor.execute("select complainant_ID,complainant_name,complaint,date_of_complaint from complaint;")#TODO change issuer ro complainant
         data=cursor.fetchall()
         if len(data)!=0:
-            print(tabulate(data,["complainant","Complaint","Date of complaint"],tablefmt="fancy_grid"))
+            print(tabulate(data,["Complainant ID","Complainant","Complaint","Date of complaint"],tablefmt="fancy_grid"))
         else:
             print("No complaint found!!!")
         print("Press ENTER to continue")
