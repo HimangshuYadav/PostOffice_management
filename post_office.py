@@ -7,6 +7,7 @@ from tabulate import tabulate
 import os
 import time
 from colorama import Fore,Style
+from pyfiglet import figlet_format
 
 UID_List=[]
 SID_List=[]
@@ -93,6 +94,9 @@ def calculate_parcel_cost(distance_km : float, weight_g : float):
     cost = 10+rate_per_km * distance_km
     return ceil(cost/100)
 
+def title():
+    print(Fore.RED+figlet_format("INDIA POST",font="standard",justify="center"),Style.RESET_ALL)
+
 '''
 Tables to be made:
 Customer details
@@ -117,7 +121,8 @@ Finance
 '''
 
 def menu():
-    print("Role")
+    title()
+    print(figlet_format("Role",font="mini"))
     print("[1]Customer")
     print("[2]Staff")
     print("[3]Admin")
@@ -149,17 +154,20 @@ def Auth_Customer():
         Auth_Customer()
     
 def login_Customer():
+    title()
+    print(figlet_format("Login",font="mini"))
     get_Lists("email",Email_List)
-    email=input("Enter your email")
+    email=input("Enter your email : ")
     if email not in Email_List:
         print("No User Found with email",email,"\nTry Again!!!")
         time.sleep(2)
+        clear_screen()
         login_Customer()
     else:
         cursor.execute(f"select password from customer where email ='{email}'")
         user_password=cursor.fetchone()[0]
         
-        password=input("Enter password :")
+        password=input("Enter password : ")
         if user_password==password:
             clear_screen()
             Customer_Menu()
@@ -167,6 +175,8 @@ def login_Customer():
             # attempts+=1
             if attempts<=3:
                 print("Incorrect Password...try again")
+                time.sleep(2)
+                clear_screen()
                 login_Customer()
             else:
                 print("3 Unsuccessful Attempts")
@@ -177,6 +187,8 @@ def login_Customer():
 
     
 def Register_Customer():
+    title()
+    print(figlet_format("Register",font="mini"))
     get_Lists("email",Email_List)
     email=input("Enter Your Email")
     if email in Email_List:
@@ -192,7 +204,7 @@ def Register_Customer():
         cursor.execute("INSERT INTO customer (UID, email, password) VALUES (%s, %s, %s)", (Userid, email, password))
         mydb.commit()
         
-        #TODO in the org database name column should be inserted
+        #TODO in the org database name column should be inserted and a variable name is to be inserted in it
 
 def Login_Staff():
     SID=input("Enter your staff ID :")
@@ -213,19 +225,25 @@ def Login_Admin():
         #TODO password check
         
 def Customer_Menu():
+    title()
+    print(figlet_format("Menu",font="mini"))
     print("[1]Track")
-    print("[2]nearest post office") #Not sure how to make it work
+    print("[2]Locate post office") #Not sure how to make it work
     print("[3]Postage Calculator")
     print("[0]Logout")
     print("")#TODO more features
     opt=int(input("Enter option :"))
     if opt==1:
+        clear_screen()
+        print(figlet_format("Track",font="mini"))
         track_parcel()
         print("PRESS Enter to continue!!!")
         next=input()
         clear_screen()
         Customer_Menu()
     elif opt==2:
+        clear_screen()
+        print(figlet_format("Locate Post Office",font="mini"))
         district=input("Enter District:")
         nearest__po=nearest_po(district)
         if len(nearest__po)!=0:
@@ -242,6 +260,8 @@ def Customer_Menu():
             
         
     elif opt==3:
+        clear_screen()
+        print(figlet_format("Postage Calculator",font="mini"))
         mass=float(input("Enter weight of your parcel(in grams) : "))
         sender=input("Enter your address")
         receiver=input("Enter the reciever's address")
@@ -445,4 +465,6 @@ def Inventory_menu():
     elif opt==3:
         pass
     
-menu()
+if __name__=="__main__":
+    clear_screen()
+    menu()
