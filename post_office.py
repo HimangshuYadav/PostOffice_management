@@ -527,33 +527,41 @@ def Complaint_menu():
         clear_screen()
         Complaint_menu()
     elif opt==3:
-        pass
+        UID=input("Enter Customer ID :")
+        cursor.execute(f"select complainant_ID,complainant_name,complaint,date_of_complaint from complaint where complainant_ID ={UID}; ")
+        info=cursor.fetchall()
+        if len(info)==0:
+            print("No complaint Found!!!\nPress ENTER to Continue")
+            input()
+            clear_screen()
+            Complaint_menu()
+        else:
+            print(tabulate(info,["Complainant ID","Complainant","Complaint","Date of complaint"],tablefmt="fancy_grid"))
+            print("Press ENTER to Continue")
+            input()
+            clear_screen()
+            Complaint_menu()
     else:
-        pass
+        print("INVAILD INPUT\n Try Again\Press ENTER to Continue")
+        input()
+        clear_screen()
+        Complaint_menu()
+        
 
 def Admin_Menu():
     print("[1]Staff management")
     print("[2]Customer Management")
-    print("[3]Finance and Transactions")
-    print("[4]Inventory and Supplies Management")
-    print("[5]Reports and Analytics")
-    print("[6]Logout")
-    opt=int(input("Enter option :"))
-    if opt==1:
+    print("[0]Logout")
+    opt=input("Enter option :")
+    if opt=="1":
         clear_screen()
         staff_management_menu()
-    elif opt==2:
+    elif opt=="2":
         clear_screen()
         Customer_Management_menu()
-    elif opt==3:
-        clear_screen()
-        Finance_menu()
-    elif opt==4:
-        clear_screen()
-        Inventory_menu()
-    elif opt==5:
+    elif opt=="0":
         pass
-    elif opt==6:
+    else:
         pass
  
 def Register_Staff():
@@ -718,33 +726,12 @@ def Customer_Management_menu():
             input()
             clear_screen()
             Customer_Management_menu()
-    else:
+    else:  
         print("INVAILD INPUT\nPress ENTER to continue")
         input()
         clear_screen()
         Customer_Management_menu()
 
-def Finance_menu():
-    print("[1]Access All Payment Records")
-    print("[2]Generate Financial Reports")
-    opt=int(input("Enter option :"))
-    if opt==1:
-        pass
-    elif opt==2:
-        pass
-
-def Inventory_menu():
-    print("[1]View Inventory Levels")
-    print("[2]Update Inventory")
-    print("[3]Track Supply Usage History")
-    opt=int(input("Enter option :"))
-    if opt==1:
-        pass
-    elif opt==2:
-        pass
-    elif opt==3:
-        pass
-    
 if __name__=="__main__":
     clear_screen()
     menu()
