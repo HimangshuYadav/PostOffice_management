@@ -93,7 +93,7 @@ def track_parcel(info:tuple,Update=False):
                 cursor.execute("update parcel_details set PID=%s,in_transit=%s,out_for_delivery=%s,delivered=%s,returned=%s,sender_add=%s,reciever_add=%s where PID=%s", updated_status)
                 mydb.commit()
                 print("Updated!!!\nPress Enter to Continue")
-                inp=input()
+                input()
                 clear_screen()
                 parcel_management_menu()
             if opt.upper()=="N":
@@ -101,8 +101,8 @@ def track_parcel(info:tuple,Update=False):
                 parcel_management_menu()
              
     except TypeError:
-        print("INVAILD Parcel ID \nTry Again!!!")
-        time.sleep(2)
+        print("INVAILD Parcel ID \nTry Again!!!\nPress ENTER to Continue")
+        input()
         clear_screen()
         Customer_Menu()
         
@@ -321,8 +321,8 @@ def Customer_Menu():
         menu()
         
     else:
-        print("INVAILD INPUT\ntry again...")
-        time.sleep(2)
+        print("INVAILD INPUT\ntry again...\nPress ENTER to Continue")
+        input()
         clear_screen()
         Customer_Menu()
 
@@ -346,7 +346,7 @@ def Staff_Menu():
         menu()
     else:
         print("Invaild Input\nTry again")
-        next=input()
+        input()
         clear_screen()
         Staff_Menu()
 
@@ -355,8 +355,9 @@ def parcel_management_menu():
     print("[2]Update Parcel Status")
     print("[3]Track Parcel by ID")
     print("[4]View All Parcels by Status")
-    opt=int(input("Enter option :"))
-    if opt==1:
+    print("[0]Exit")
+    opt=input("Enter option :")
+    if opt=="1":
         To=input("Enter Recievers Address :")
         From=input("Enter Senders Address :")
         cursor.execute("select PID from parcel_details order by PID desc;")
@@ -372,7 +373,7 @@ def parcel_management_menu():
         clear_screen()
         Staff_Menu()
         
-    elif opt==2:
+    elif opt=="2":
         get_Lists("PID",PID_List,"parcel_details")
         PID=int(input("Enter parcel ID :"))
         if PID not in PID_List:
@@ -385,7 +386,7 @@ def parcel_management_menu():
             info=cursor.fetchone()
             print(info)
             track_parcel(info,True)
-    elif opt==3:
+    elif opt=="3":
         PID=int(input("Enter parcel ID :"))
         cursor.execute(f"select * from parcel_details where PID={PID}")
         info=cursor.fetchone()
@@ -394,7 +395,7 @@ def parcel_management_menu():
         next=input()
         clear_screen()
         parcel_management_menu()
-    elif opt==4:
+    elif opt=="4":
         print("[1]In Transit")
         print("[2]Out for Delivery")
         print("[3]Deliverd")
@@ -458,10 +459,21 @@ def parcel_management_menu():
                 next=input()
                 clear_screen()
                 parcel_management_menu()
+    
+    elif opt=="0":
+        clear_screen()
+        Staff_Menu()
+        
+    else:
+        print("INVAILD INPUT\nPress ENTER to Continue")
+        input()
+        clear_screen()
+        parcel_management_menu()
 
 def Customer_service_menu():
     print("[1]Register New Customer")
     print("[2]Search Customer by ID or Name")
+    print("[0]Exit")
     opt=int(input("Enter option :"))
     if opt==1:
         Register_Customer()
@@ -482,10 +494,13 @@ def Customer_service_menu():
             clear_screen()
             Customer_service_menu()
             
+    elif opt=="0":
+        clear_screen()
+        Staff_Menu()
+            
     else:
-        print("INVAILD INPUT")
-        print("PRESS Enter to continue!!!")
-        next=input()
+        print("INVAILD INPUT\nPRESS Enter to continue!!!")
+        input()
         clear_screen()
         Customer_service_menu()
 
@@ -493,8 +508,9 @@ def Complaint_menu():
     print("[1]Register New Complaint")
     print("[2]View All Complaints")
     print("[3]Search Complaints by Customer ID")
-    opt=int(input("Enter option :"))
-    if opt==1:
+    print("[0]Exit")
+    opt=input("Enter option :")
+    if opt=="1":
         CID=get_UID("complaint","CID")
         complainant=input("Enter complainant's name :")
         complainant_ID=input("Enter complainant's ID :")
@@ -515,7 +531,7 @@ def Complaint_menu():
             clear_screen()
             Complaint_menu()
         
-    elif opt==2:
+    elif opt=="2":
         cursor.execute("select complainant_ID,complainant_name,complaint,date_of_complaint from complaint;")#TODO change issuer ro complainant
         data=cursor.fetchall()
         if len(data)!=0:
@@ -526,7 +542,7 @@ def Complaint_menu():
         next=input()
         clear_screen()
         Complaint_menu()
-    elif opt==3:
+    elif opt=="3":
         UID=input("Enter Customer ID :")
         cursor.execute(f"select complainant_ID,complainant_name,complaint,date_of_complaint from complaint where complainant_ID ={UID}; ")
         info=cursor.fetchall()
@@ -541,6 +557,10 @@ def Complaint_menu():
             input()
             clear_screen()
             Complaint_menu()
+            
+    elif opt=="0":
+        clear_screen()
+        Staff_Menu()
     else:
         print("INVAILD INPUT\n Try Again\Press ENTER to Continue")
         input()
@@ -560,9 +580,13 @@ def Admin_Menu():
         clear_screen()
         Customer_Management_menu()
     elif opt=="0":
-        pass
+        clear_screen()
+        menu()
     else:
-        pass
+        print("INVAILD INPUT\nPress ENTER to Continue")
+        input()
+        clear_screen()
+        Admin_Menu()
  
 def Register_Staff():
     get_Lists("email",SEmail_List,"staff_details")
