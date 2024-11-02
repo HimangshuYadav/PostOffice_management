@@ -21,7 +21,7 @@ attempts=0
 
 mydb=con.connect(host="localhost",user="root",passwd="uhsgnamih")
 cursor=mydb.cursor()
-cursor.execute("use postoffice_test;")
+cursor.execute("use postoffice;")
 
 def clear_screen():
     os.system('cls')
@@ -165,7 +165,7 @@ def menu():
         Login_Staff()
     elif role==3:
         clear_screen()
-        Admin_Menu()
+        Login_Admin()
     elif role==0:
         pass
     else:
@@ -188,7 +188,7 @@ def Auth_Customer():
 def login_Customer():
     title()
     print(figlet_format("Login",font="mini"))
-    get_Lists("email",Email_List,"customer")
+    get_Lists("email",Email_List,"customer_details")
     email=input("Enter your email : ")
     if email not in Email_List:
         print("No User Found with email",email,"\nTry Again!!!")
@@ -196,7 +196,7 @@ def login_Customer():
         clear_screen()
         login_Customer()
     else:
-        cursor.execute(f"select password from customer where email ='{email}'")
+        cursor.execute(f"select password from customer_details where email ='{email}'")
         user_password=cursor.fetchone()[0]
         
         password=ask_pass()
@@ -220,7 +220,7 @@ def login_Customer():
 def Register_Customer():
     title()
     print(figlet_format("Register",font="mini"))
-    get_Lists("email",Email_List,"customer")
+    get_Lists("email",Email_List,"customer_details")
     email=input("Enter Your Email")
     if email in Email_List:
         print("User already exist...moving to login page..")
@@ -228,15 +228,14 @@ def Register_Customer():
     else:
         password=ask_pass()
         name=input("What should we call you??? :")
-        Userid=get_UID("customer","UID")
+        Userid=get_UID("customer_details","UID")
         print("This is your UserId:",Userid)
         while cursor.nextset():
             cursor.fetchall()
-        cursor.execute("INSERT INTO customer (UID, email, password) VALUES (%s, %s, %s)", (Userid, email, password))
+        cursor.execute("INSERT INTO customer_details (UID, email, password,name) VALUES (%s, %s, %s,%s)", (Userid, email, password,name))
         mydb.commit()
         login_Customer()
         
-        #TODO in the org database name column should be inserted and a variable name is to be inserted in it
 
 def Login_Staff():
     title()
@@ -271,14 +270,24 @@ def Login_Staff():
                 #TODO attempts method
    
 def Login_Admin():
+    get_Lists("AID",AID_List,"admin_details")
     title()
-    AID=input("Enter Admin Id")
+    AID=int(input("Enter Admin Id :"))
     if AID not in AID_List:
         print("Incorrect Admin ID...\nmoving to Menu...")
         menu()
     else:
+        cursor.execute(f"select password from admin_details where AID ='{AID}'")
+        user_password=cursor.fetchone()[0]
         password=ask_pass()
-        #TODO password check
+        if user_password==password:
+            clear_screen()
+            Admin_Menu()
+        else:
+            print("Incorrect Pasword")
+            
+        
+        
   
 def Customer_Menu():
     title()
@@ -508,7 +517,7 @@ def Customer_service_menu():
         Register_Customer()
     elif opt==2:
         UID=input("Enter User ID or email:")
-        cursor.execute("select * from customer where UID=%s or email=%s;",(UID,UID))
+        cursor.execute("select * from customer_details where UID=%s or email=%s;",(UID,UID))
         info=cursor.fetchall()
         if len(info)!=0:
             print(tabulate(info,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
@@ -636,8 +645,8 @@ def Register_Staff():
     else:
         password=ask_pass()
         name=input("Enter the name of Employee :")
-        print("This is your UserId")
         SID=get_UID("staff_details","SID")
+        print("This is your UserId",SID)
         cursor.execute("insert into staff_details values(%s,%s,%s,%s)",(SID,password,name,email))
         mydb.commit()
         print("Press ENTER to continue")
@@ -658,7 +667,7 @@ def Update_Staff():
         cursor.execute(f"select * from staff_details where SID={SId};")
         data=cursor.fetchone()
         print(data)
-        print(tabulate([data],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
+        print(tabulate(data,["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
         opt=input("Do you want to update this ???(y/n)")
         if opt.upper() =="Y":
             print("[1]Email")
@@ -696,7 +705,7 @@ def staff_management_menu():
     elif opt=="3":
         cursor.execute("Select * from staff_details;")
         details=cursor.fetchall()
-        print(tabulate([details],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
+        print(tabulate(details,["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
         print("Press ENTER to Continue")
         input()
         clear_screen()
@@ -749,9 +758,9 @@ def Customer_Management_menu():
     print("[0]Exit")
     opt=input("Enter option :")
     if opt=="1":
-        cursor.execute("select * from customer ;")
+        cursor.execute("select * from customer_details ;")
         data=cursor.fetchall()
-        print(tabulate([data],["User ID","Email","password"],tablefmt="fancy_grid"))
+        print(tabulate(data,["User ID","Email","password"],tablefmt="fancy_grid"))
         print("Press ENTER to continue")
         input()
         clear_screen()
@@ -767,11 +776,11 @@ def Customer_Management_menu():
                 clear_screen()
                 Customer_Management_menu()
             else:
-                cursor.execute(f"select password from customer where UID ='{UId}'")
+                cursor.execute(f"select password from customer_details where UID ='{UId}'")
                 user_password=cursor.fetchone()[0]
                 password=ask_pass()
                 if user_password==password:
-                    cursor.execute("DELETE FROM customer WHERE UID=%s;",(UId))
+                    cursor.execute("DELETE FROM customer_details WHERE UID=%s;",(UId))
                     mydb.commit()
                     print("Customer deleted Successfully\nPress ENTER to continue")
                     input()
