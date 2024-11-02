@@ -606,9 +606,8 @@ def Update_Staff():
                     clear_screen()
                     Admin_Menu()
                     
-                except Exception as e:
+                except Exception:
                     print("Updation Unsuccessful\nTry again\Press ENTER to Continue")
-                    print(e)
                     input()
                     clear_screen()
                     Update_Staff()
@@ -617,7 +616,7 @@ def Update_Staff():
 def staff_management_menu():    
     print("[1]Register New Staff Member")
     print("[2]Update Staff Information")
-    print("[3]Assign Roles and Permissions")
+    print("[3]View all Staff")
     print("[4]Remove Staff Members")
     opt=int(input("Enter option :"))
     if opt==1:
@@ -625,11 +624,45 @@ def staff_management_menu():
     elif opt==2:
         Update_Staff()
     elif opt==3:
-        SID=input("Enter SID")
-        #TODO check the existance and make a menu for this
+        cursor.execute("Select * from staff_details;")
+        details=cursor.fetchall()
+        print(tabulate([details],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
+        print("Press ENTER to Continue")
+        input()
+        clear_screen()
+        Admin_Menu()
     elif opt==4:
-        SID=input("Enter SID")
-        #TODO password check of admin and then delete staff
+        SId=input("Enter SID of Staff to remove :")
+        inp=input("Are You sure to remove this staff:")
+        if inp.lower()=="y":
+            AID=input("Enter Your Admin ID :")
+            if AID not in AID_List:
+                print("Incorrect Admin ID\nPress Enter To navigate to Admin Menu")
+                input()
+                clear_screen()
+                Admin_Menu()
+            else:
+                cursor.execute(f"select password from staff_details where AID ='{AID}'")
+                user_password=cursor.fetchone()[0]
+                password=input("Enter password : ")
+                if user_password==password:
+                    cursor.execute("DELETE FROM staff_details WHERE SID=%s;",(SId))
+                    mydb.commit()
+                    print("Staff deleted Successfully\nPress ENTER to continue")
+                    input()
+                    clear_screen()
+                    Admin_Menu()
+        elif inp.lower()=="n":
+            print("Press ENTER to Continue")
+            input()
+            clear_screen()
+            Admin_Menu()
+        else:
+            print("INVALID INPUT\nTry Again")
+            print("Press ENTER to continue")
+            input()
+            clear_screen()
+            staff_management_menu()
  
 def Customer_Management_menu():
     print("[1]View and Manage Customer Records")
