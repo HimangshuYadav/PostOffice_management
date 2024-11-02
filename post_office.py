@@ -2,7 +2,7 @@ import mysql.connector as con
 import csv
 from geopy.geocoders import Nominatim
 from geopy.distance import distance
-from math import ceil,floor
+from math import ceil
 from tabulate import tabulate
 import os
 import time
@@ -100,7 +100,7 @@ def track_parcel(info:tuple,Update=False):
                     clear_screen()
                     track_parcel(info,Update)
                 updated_status.append(updated_status[0])
-                print(updated_status)
+                # print(updated_status)
                 cursor.execute("update parcel_details set PID=%s,in_transit=%s,out_for_delivery=%s,delivered=%s,returned=%s,sender_add=%s,reciever_add=%s where PID=%s", updated_status)
                 mydb.commit()
                 print("Updated!!!\nPress Enter to Continue")
@@ -128,10 +128,15 @@ def nearest_po(s:str):
     return result_list
 
 def calculate_distance(location1, location2):
-    geolocator=Nominatim(user_agent='distance_calculator')
-    location1=geolocator.geocode(location1)
-    location2=geolocator.geocode(location2)
-    return distance((location1.latitude,location1.longitude),(location2.latitude,location2.longitude)).meters/1000
+    try:
+        geolocator=Nominatim(user_agent='distance_calculator')
+        location1=geolocator.geocode(location1)
+        location2=geolocator.geocode(location2)
+        return distance((location1.latitude,location1.longitude),(location2.latitude,location2.longitude)).meters/1000
+    except:
+        return 1000
+   
+
 
 def calculate_parcel_cost(distance_km : float, weight_g : float):
     # Define rate per km based on weight slabs
@@ -143,8 +148,11 @@ def calculate_parcel_cost(distance_km : float, weight_g : float):
         rate_per_km = 20  # example rate
 
     # Calculate cost
-    cost = 10+rate_per_km * distance_km
-    return ceil(cost/100)
+    try:
+        cost = 10+rate_per_km * distance_km
+        return ceil(cost/100)
+    except TypeError:
+        return 100
 
 def title():
     print(Fore.RED+figlet_format("INDIA POST",font="standard",justify="center"),Style.RESET_ALL)
@@ -182,7 +190,9 @@ def Auth_Customer():
         clear_screen()
         login_Customer()
     else:
-        print("Invaild Input...try again")
+        print("Invaild Input...Press ENTER to Continue")
+        input()
+        clear_screen()
         Auth_Customer()
 
 def login_Customer():
@@ -234,6 +244,7 @@ def Register_Customer():
             cursor.fetchall()
         cursor.execute("INSERT INTO customer_details (UID, email, password,name) VALUES (%s, %s, %s,%s)", (Userid, email, password,name))
         mydb.commit()
+        clear_screen()
         login_Customer()
         
 
@@ -274,7 +285,10 @@ def Login_Admin():
     title()
     AID=int(input("Enter Admin Id :"))
     if AID not in AID_List:
-        print("Incorrect Admin ID...\nmoving to Menu...")
+        print(AID_List)
+        print("Incorrect Admin ID...\nPress ENTER Continue")
+        input()
+        clear_screen()
         menu()
     else:
         cursor.execute(f"select password from admin_details where AID ='{AID}'")
@@ -323,8 +337,8 @@ def Customer_Menu():
             clear_screen()
             Customer_Menu()
         else:
-            print("District not found!!!\nTry Again!!!")
-            time.sleep(2)
+            print("District not found!!!\nPress ENTER to Continue")
+            input()
             clear_screen()
             Customer_Menu()
             
@@ -393,7 +407,10 @@ def parcel_management_menu():
         From=input("Enter Senders Address :")
         cursor.execute("select PID from parcel_details order by PID desc;")
         last_PID=cursor.fetchone()[0]
-        current_PID=last_PID+1
+        try:
+            current_PID=last_PID+1
+        except TypeError:
+            current_PID=1
         print("Parcel ID :",current_PID)
         while cursor.nextset():
             cursor.fetchall()
@@ -417,7 +434,7 @@ def parcel_management_menu():
         else:
             cursor.execute(f"select * from parcel_details where PID ={PID}")
             info=cursor.fetchone()
-            print(info)
+            # print(info)
             track_parcel(info,True)
     elif opt=="3":
         clear_screen()
@@ -436,7 +453,8 @@ def parcel_management_menu():
         print("[1]In Transit")
         print("[2]Out for Delivery")
         print("[3]Deliverd")
-        print("[3]Returned")
+        print("[4]Returned")
+        print("[0]Exit")
         inp=(input("Enter option :"))
         if inp=="1":
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=false and delivered=false and returned=false")
@@ -496,6 +514,14 @@ def parcel_management_menu():
                 input()
                 clear_screen()
                 parcel_management_menu()
+        if inp=='0':
+            clear_screen()
+            parcel_management_menu()
+        else:
+            print("Invaild Input\nPress ENTER to Continue")
+            input()
+            clear_screen()
+            parcel_management_menu()
     
     elif opt=="0":
         clear_screen()
@@ -646,9 +672,10 @@ def Register_Staff():
         password=ask_pass()
         name=input("Enter the name of Employee :")
         SID=get_UID("staff_details","SID")
-        print("This is your UserId",SID)
-        cursor.execute("insert into staff_details values(%s,%s,%s,%s)",(SID,password,name,email))
+        cursor.fetchall()
+        cursor.execute("insert into staff_details values(%s,%s,%s,%s);",(SID,password,name,email))
         mydb.commit()
+        print("This is your UserId",SID)
         print("Press ENTER to continue")
         input()
         clear_screen()
@@ -666,8 +693,8 @@ def Update_Staff():
     else:
         cursor.execute(f"select * from staff_details where SID={SId};")
         data=cursor.fetchone()
-        print(data)
-        print(tabulate(data,["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
+        # print(data)
+        print(tabulate([data],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
         opt=input("Do you want to update this ???(y/n)")
         if opt.upper() =="Y":
             print("[1]Email")
@@ -678,6 +705,21 @@ def Update_Staff():
                 New_Email=input("Enter new email :")
                 try:
                     cursor.execute("update staff_details set email=%s where SID=%s",(New_Email,SId))
+                    mydb.commit()
+                    print("Updation Successful\nPress ENTER to Continue")
+                    input()
+                    clear_screen()
+                    Admin_Menu()
+                    
+                except Exception:
+                    print("Updation Unsuccessful\nTry again\Press ENTER to Continue")
+                    input()
+                    clear_screen()
+                    Update_Staff()
+            elif inp=="2":
+                New_Name=input("Enter Updated name :")
+                try:
+                    cursor.execute("update staff_details set name=%s where SID=%s",(New_Name,SId))
                     mydb.commit()
                     print("Updation Successful\nPress ENTER to Continue")
                     input()
@@ -712,20 +754,24 @@ def staff_management_menu():
         Admin_Menu()
     elif opt=="4":
         SId=input("Enter SID of Staff to remove :")
-        inp=input("Are You sure to remove this staff:")
+        cursor.execute(f"select SID,name,email from staff_details where SID ={SId};")
+        data=cursor.fetchone()
+        print(tabulate([data],["User ID","Email","password"],tablefmt="fancy_grid"))
+        inp=input("Are You sure to remove this staff(y/n)")
         if inp.lower()=="y":
-            AID=input("Enter Your Admin ID :")
+            get_Lists("AID",AID_List,"admin_details")
+            AID=int(input("Enter Your Admin ID :"))
             if AID not in AID_List:
                 print("Incorrect Admin ID\nPress Enter To navigate to Admin Menu")
                 input()
                 clear_screen()
                 Admin_Menu()
             else:
-                cursor.execute(f"select password from staff_details where AID ='{AID}'")
+                cursor.execute(f"select password from admin_details where AID ={AID}")
                 user_password=cursor.fetchone()[0]
                 password=ask_pass()
                 if user_password==password:
-                    cursor.execute("DELETE FROM staff_details WHERE SID=%s;",(SId))
+                    cursor.execute(f"DELETE FROM staff_details WHERE SID={SId};")
                     mydb.commit()
                     print("Staff deleted Successfully\nPress ENTER to continue")
                     input()
@@ -760,7 +806,10 @@ def Customer_Management_menu():
     if opt=="1":
         cursor.execute("select * from customer_details ;")
         data=cursor.fetchall()
-        print(tabulate(data,["User ID","Email","password"],tablefmt="fancy_grid"))
+        if len(data)!=0:
+            print(tabulate(data,["User ID","password","name","email"],tablefmt="fancy_grid"))
+        else:
+            print("There is No Customer Registered")
         print("Press ENTER to continue")
         input()
         clear_screen()
