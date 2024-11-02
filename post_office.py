@@ -652,6 +652,11 @@ def staff_management_menu():
                     input()
                     clear_screen()
                     Admin_Menu()
+                else:
+                    print("Wrong password...\nPress ENTER to continue")
+                    input()
+                    clear_screen()
+                    staff_management_menu()
         elif inp.lower()=="n":
             print("Press ENTER to Continue")
             input()
@@ -665,16 +670,59 @@ def staff_management_menu():
             staff_management_menu()
  
 def Customer_Management_menu():
-    print("[1]View and Manage Customer Records")
+    print("[1]View Customer Records")
     print("[2]Delete Customer Data")
-    print("[3]View Customer History")
-    opt=int(input("Enter option :"))
-    if opt==1:
-        pass
-    elif opt==2:
-        pass
-    elif opt==3:
-        pass
+    opt=input("Enter option :")
+    if opt=="1":
+        cursor.execute("select * from customer ;")
+        data=cursor.fetchall()
+        print(tabulate([data],["User ID","Email","password"],tablefmt="fancy_grid"))
+        print("Press ENTER to continue")
+        input()
+        clear_screen()
+        Customer_Management_menu()
+    elif opt=="2":
+        UId=input("Enter User ID of User to remove :")
+        inp=input("Are You sure to remove this staff:")
+        if inp.lower()=="y":
+            AID=input("Enter Your Admin ID :")
+            if AID not in AID_List:
+                print("Incorrect Admin ID\nPress Enter To navigate to Admin Menu")
+                input()
+                clear_screen()
+                Customer_Management_menu()
+            else:
+                cursor.execute(f"select password from customer where UID ='{UId}'")
+                user_password=cursor.fetchone()[0]
+                password=input("Enter password : ")
+                if user_password==password:
+                    cursor.execute("DELETE FROM customer WHERE UID=%s;",(UId))
+                    mydb.commit()
+                    print("Customer deleted Successfully\nPress ENTER to continue")
+                    input()
+                    clear_screen()
+                    Admin_Menu()
+                else:
+                    print("Wrong password...\nPress ENTER to continue")
+                    input()
+                    clear_screen()
+                    Customer_Management_menu()
+        elif inp.lower()=="n":
+            print("Press ENTER to Continue")
+            input()
+            clear_screen()
+            Customer_Management_menu()
+        else:
+            print("INVALID INPUT\nTry Again")
+            print("Press ENTER to continue")
+            input()
+            clear_screen()
+            Customer_Management_menu()
+    else:
+        print("INVAILD INPUT\nPress ENTER to continue")
+        input()
+        clear_screen()
+        Customer_Management_menu()
 
 def Finance_menu():
     print("[1]Access All Payment Records")
