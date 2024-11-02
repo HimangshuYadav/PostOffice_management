@@ -228,7 +228,7 @@ def Register_Customer():
     title()
     print(figlet_format("Register",font="mini"))
     get_Lists("email",Email_List,"customer_details")
-    email=input("Enter Your Email")
+    email=input("Enter Email :")
     if email in Email_List:
         print("User already exist...moving to login page..")
         login_Customer()
@@ -503,6 +503,7 @@ def Customer_service_menu():
     print("[0]Exit")
     opt=input("Enter option :")
     if opt=="1":
+        clear_screen()
         Register_Customer()
     elif opt=="2":
         UID=input("Enter User ID or email:")
@@ -745,19 +746,19 @@ def Customer_Management_menu():
         Customer_Management_menu()
     elif opt=="2":
         UId=input("Enter User ID of User to remove :")
-        inp=input("Are You sure to remove this staff:")
+        inp=input("Are You sure to remove this User(y/n)")
         if inp.lower()=="y":
-            AID=input("Enter Your Admin ID :")
+            AID=int(input("Enter Your Admin ID :"))
             if AID not in AID_List:
                 print("Incorrect Admin ID")
                 Press_Enter()
                 Customer_Management_menu()
             else:
-                cursor.execute(f"select password from customer_details where UID ='{UId}'")
+                cursor.execute(f"select password from customer_details where UID ={UId}")
                 user_password=cursor.fetchone()[0]
                 password=ask_pass()
                 if user_password==password:
-                    cursor.execute("DELETE FROM customer_details WHERE UID=%s;",(UId))
+                    cursor.execute(f"DELETE FROM customer_details WHERE UID={UId};")
                     mydb.commit()
                     print("Customer deleted Successfully")
                     Press_Enter()
