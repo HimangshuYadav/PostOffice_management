@@ -18,7 +18,7 @@ PID_List=[]
 Email_List=[]
 attempts=0
 
-mydb=con.connect(host="localhost",user="root",passwd="uhsgnamih")
+mydb=con.connect(host="localhost",user="root",passwd="")
 cursor=mydb.cursor()
 cursor.execute("use postoffice;")
 
