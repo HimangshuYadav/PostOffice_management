@@ -27,7 +27,7 @@ def setup():
         print(f"{'requirements.txt'} not found. Please ensure the file exists.")
 
 
-    mydb=mysql.connector.connect(host="localhost",user="root",passwd="uhsgnamih")
+    mydb=mysql.connector.connect(host="localhost",user="root",passwd="")
     cursor=mydb.cursor()
     cursor.execute("create database if not exists postoffice;")
     cursor.execute("use postoffice;")
