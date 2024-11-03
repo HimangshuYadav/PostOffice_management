@@ -250,7 +250,7 @@ def Login_Staff():
     get_Lists("email",SEmail_List,"staff_details")
     Email=input("Enter your Employee Email :")
     if Email not in SEmail_List:
-        print(SEmail_List)
+        # print(SEmail_List)
         print("Incorrect Email...")
         Press_Enter()
         Login_Staff()
@@ -610,6 +610,7 @@ def Admin_Menu():
         Admin_Menu()
  
 def Register_Staff():
+    title()
     get_Lists("email",SEmail_List,"staff_details")
     email=input("Enter Employye's Email")
     if email in SEmail_List:#TODO check this and adjust the code
@@ -623,7 +624,7 @@ def Register_Staff():
         cursor.fetchall()
         cursor.execute("insert into staff_details values(%s,%s,%s,%s);",(SID,password,name,email))
         mydb.commit()
-        print("This is your UserId",SID)
+        print("This is your Staff Id :",SID)
         Press_Enter()
         Admin_Menu()
         
@@ -675,6 +676,7 @@ def Update_Staff():
 
         
 def staff_management_menu():    
+    title()
     print("[1]Register New Staff Member")
     print("[2]Update Staff Information")
     print("[3]View all Staff")
@@ -682,16 +684,22 @@ def staff_management_menu():
     print("[0]Exit")
     opt=input("Enter option :")
     if opt=="1":
+        clear_screen()
         Register_Staff()
     elif opt=="2":
+        clear_screen()
         Update_Staff()
     elif opt=="3":
+        clear_screen()
+        title()
         cursor.execute("Select * from staff_details;")
         details=cursor.fetchall()
         print(tabulate(details,["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
         Press_Enter()
         Admin_Menu()
     elif opt=="4":
+        clear_screen()
+        title()
         SId=input("Enter SID of Staff to remove :")
         cursor.execute(f"select SID,name,email from staff_details where SID ={SId};")
         data=cursor.fetchone()
@@ -731,6 +739,7 @@ def staff_management_menu():
         Admin_Menu()
  
 def Customer_Management_menu():
+    title()
     print("[1]View Customer Records")
     print("[2]Delete Customer Data")
     print("[0]Exit")
@@ -746,6 +755,9 @@ def Customer_Management_menu():
         Customer_Management_menu()
     elif opt=="2":
         UId=input("Enter User ID of User to remove :")
+        cursor.execute(f"select UID,name,email from customer_details where UID={UId}")
+        info=cursor.fetchone()
+        print(tabulate([info],["UID","Name","Email"],tablefmt="fancy_grid"))
         inp=input("Are You sure to remove this User(y/n)")
         if inp.lower()=="y":
             AID=int(input("Enter Your Admin ID :"))
