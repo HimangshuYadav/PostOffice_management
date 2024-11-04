@@ -839,7 +839,6 @@ if __name__=="__main__" and state==True:
     menu()
     
 if __name__=="__main__" and state==False:
-    clear_screen()
     print(Fore.RED+"Please run the setup File First"+Style.RESET_ALL)
    
     
