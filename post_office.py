@@ -1,14 +1,16 @@
 import mysql.connector as con
 import csv
+import mysql.connector.errors
 from geopy.geocoders import Nominatim
 from geopy.distance import distance
-from math import ceil,floor
+from math import ceil
 from tabulate import tabulate
 import os
-import time
+from maskpass import advpass
 from colorama import Fore,Style
 from pyfiglet import figlet_format
 from datetime import datetime
+## mysql-connector==2.2.9
 
 UID_List=[]
 SID_List=[]
@@ -18,12 +20,34 @@ PID_List=[]
 Email_List=[]
 attempts=0
 
-mydb=con.connect(host="localhost",user="root",passwd="uhsgnamih")
-cursor=mydb.cursor()
-cursor.execute("use postoffice_test;")
+def connect():
+    mydb=con.connect(host="localhost",user="root",passwd="uhsgnamih")
+    cursor=mydb.cursor()
+    try:
+        cursor.execute("use postoffice;")
+        return cursor,mydb,True
+    except mysql.connector.errors.ProgrammingError:
+        print("Please run the setUp file First")
+        return cursor,mydb,False
+cursor,mydb,state=connect()
+
+def Press_Enter():
+    print("Press ENTER to Continue")
+    input()
+    clear_screen()
 
 def clear_screen():
     os.system('cls')
+    
+def ask_pass():
+    password=advpass()
+    if len(password)<8:
+        print("Lenght of password should be more than 8\nPress ENTER Try again")
+        input()
+        ask_pass()
+    else:
+        return password
+        
 
 def get_Lists(string:str,to_List:list,from_table:str):
     if len(to_List)==0:
@@ -84,17 +108,16 @@ def track_parcel(info:tuple,Update=False):
                 elif status=="4":
                    updated_status[1],updated_status[2],updated_status[3],updated_status[4]=[1,1,1,1]
                 else:
-                    print("Invaild Input!!!\n Try Again")
-                    time.sleep(2)
+                    print("Invaild Input!!!\nPress ENTER to Continue")
+                    input
                     clear_screen()
                     track_parcel(info,Update)
                 updated_status.append(updated_status[0])
-                print(updated_status)
+                # print(updated_status)
                 cursor.execute("update parcel_details set PID=%s,in_transit=%s,out_for_delivery=%s,delivered=%s,returned=%s,sender_add=%s,reciever_add=%s where PID=%s", updated_status)
                 mydb.commit()
-                print("Updated!!!\nPress Enter to Continue")
-                inp=input()
-                clear_screen()
+                print("Updated!!!")
+                Press_Enter()
                 parcel_management_menu()
             if opt.upper()=="N":
                 clear_screen()
@@ -102,8 +125,7 @@ def track_parcel(info:tuple,Update=False):
              
     except TypeError:
         print("INVAILD Parcel ID \nTry Again!!!")
-        time.sleep(2)
-        clear_screen()
+        Press_Enter()
         Customer_Menu()
         
      
@@ -117,10 +139,15 @@ def nearest_po(s:str):
     return result_list
 
 def calculate_distance(location1, location2):
-    geolocator=Nominatim(user_agent='distance_calculator')
-    location1=geolocator.geocode(location1)
-    location2=geolocator.geocode(location2)
-    return distance((location1.latitude,location1.longitude),(location2.latitude,location2.longitude)).meters/1000
+    try:
+        geolocator=Nominatim(user_agent='distance_calculator')
+        location1=geolocator.geocode(location1)
+        location2=geolocator.geocode(location2)
+        return distance((location1.latitude,location1.longitude),(location2.latitude,location2.longitude)).meters/1000
+    except:
+        return 1000
+   
+
 
 def calculate_parcel_cost(distance_km : float, weight_g : float):
     # Define rate per km based on weight slabs
@@ -132,8 +159,11 @@ def calculate_parcel_cost(distance_km : float, weight_g : float):
         rate_per_km = 20  # example rate
 
     # Calculate cost
-    cost = 10+rate_per_km * distance_km
-    return ceil(cost/100)
+    try:
+        cost = 10+rate_per_km * distance_km
+        return ceil(cost/100)
+    except TypeError:
+        return 100
 
 def title():
     print(Fore.RED+figlet_format("INDIA POST",font="standard",justify="center"),Style.RESET_ALL)
@@ -154,7 +184,7 @@ def menu():
         Login_Staff()
     elif role==3:
         clear_screen()
-        Admin_Menu()
+        Login_Admin()
     elif role==0:
         pass
     else:
@@ -162,6 +192,8 @@ def menu():
         menu()
      
 def Auth_Customer():
+    title()
+    print(figlet_format("Auth",font="mini"))
     new=input("you are New user???(y/n)")
     if new=="y":
         clear_screen()
@@ -170,100 +202,113 @@ def Auth_Customer():
         clear_screen()
         login_Customer()
     else:
-        print("Invaild Input...try again")
+        print("Invaild Input...")
+        Press_Enter()
         Auth_Customer()
 
 def login_Customer():
     title()
     print(figlet_format("Login",font="mini"))
-    get_Lists("email",Email_List,"customer")
+    get_Lists("email",Email_List,"customer_details")
     email=input("Enter your email : ")
     if email not in Email_List:
-        print("No User Found with email",email,"\nTry Again!!!")
-        time.sleep(2)
-        clear_screen()
+        print("No User Found with email",email,)
+        Press_Enter()
         login_Customer()
     else:
-        cursor.execute(f"select password from customer where email ='{email}'")
+        cursor.execute(f"select password from customer_details where email ='{email}'")
         user_password=cursor.fetchone()[0]
         
-        password=input("Enter password : ")
+        password=ask_pass()
         if user_password==password:
             clear_screen()
             Customer_Menu()
         else:
             # attempts+=1
             if attempts<=3:
-                print("Incorrect Password...try again")
-                time.sleep(2)
-                clear_screen()
+                print("Incorrect Password...")
+                Press_Enter()
                 login_Customer()
             else:
                 print("3 Unsuccessful Attempts")
-                print("moving to main menu")
-                time.sleep(3)
-                clear_screen()
+                Press_Enter()
                 menu()
                 #TODO 3 attempt thing is not working come here again
 def Register_Customer():
     title()
     print(figlet_format("Register",font="mini"))
-    get_Lists("email",Email_List,"customer")
-    email=input("Enter Your Email")
+    get_Lists("email",Email_List,"customer_details")
+    email=input("Enter Email :")
     if email in Email_List:
         print("User already exist...moving to login page..")
         login_Customer()
     else:
-        password=input("Enter Password :")
+        password=ask_pass()
         name=input("What should we call you??? :")
-        Userid=get_UID("customer","UID")
+        Userid=get_UID("customer_details","UID")
         print("This is your UserId:",Userid)
         while cursor.nextset():
             cursor.fetchall()
-        cursor.execute("INSERT INTO customer (UID, email, password) VALUES (%s, %s, %s)", (Userid, email, password))
-        mydb.commit()
+        try:
+            cursor.execute("INSERT INTO customer_details (UID, email, password,name) VALUES (%s, %s, %s,%s)", (Userid, email, password,name))
+            mydb.commit()
+        except Exception:
+            print("Something Went Wrong")
+        clear_screen()
+        login_Customer()
         
-        #TODO in the org database name column should be inserted and a variable name is to be inserted in it
 
 def Login_Staff():
+    title()
+    print(figlet_format("Login",font="mini"))
     get_Lists("email",SEmail_List,"staff_details")
     Email=input("Enter your Employee Email :")
     if Email not in SEmail_List:
-        print(SEmail_List)
-        print("Incorrect Email...try again")
-        time.sleep(2)
-        clear_screen()
+        # print(SEmail_List)
+        print("Incorrect Email...")
+        Press_Enter()
         Login_Staff()
     else:
         cursor.execute(f"select password from staff_details where email ='{Email}'")
         user_password=cursor.fetchone()[0]
-        password=input("Enter password : ")
+        password=ask_pass()
         if user_password==password:
             clear_screen()
             Staff_Menu()
         else:
             # attempts+=1
             if attempts<=3:
-                print("Incorrect Password...try again")
-                time.sleep(2)
-                clear_screen()
+                print("Incorrect Password...")
+                Press_Enter()
                 Login_Staff()
             else:
                 print("3 Unsuccessful Attempts")
-                print("moving to main menu")
-                time.sleep(3)
-                clear_screen()
+                Press_Enter()
                 menu()
                 #TODO attempts method
    
 def Login_Admin():
-    AID=input("Enter Admin Id")
+    get_Lists("AID",AID_List,"admin_details")
+    title()
+    print(figlet_format("Login",font="mini"))
+    AID=int(input("Enter Admin Id :"))
     if AID not in AID_List:
-        print("Incorrect Admin ID...\nmoving to Menu...")
+        print(AID_List)
+        print("Incorrect Admin ID...")
+        Press_Enter()
         menu()
     else:
-        password=input("Enter password")
-        #TODO password check
+        cursor.execute(f"select password from admin_details where AID ='{AID}'")
+        user_password=cursor.fetchone()[0]
+        password=ask_pass()
+        if user_password==password:
+            clear_screen()
+            Admin_Menu()
+        else:
+            print("Incorrect Pasword")
+            
+        
+        
   
 def Customer_Menu():
     title()
@@ -276,44 +321,40 @@ def Customer_Menu():
     opt=int(input("Enter option :"))
     if opt==1:
         clear_screen()
+        title()
         print(figlet_format("Track",font="mini"))
         PID=int(input("Enter parcel ID :"))
         cursor.execute(f"select * from parcel_details where PID={PID}")
         info=cursor.fetchone()
         track_parcel(info)
-        print("PRESS Enter to continue!!!")
-        next=input()
-        clear_screen()
+        Press_Enter()
         Customer_Menu()
     elif opt==2:
         clear_screen()
+        title()
         print(figlet_format("Locate Post Office",font="mini"))
         district=input("Enter District:")
         nearest__po=nearest_po(district)
         if len(nearest__po)!=0:
             print(tabulate(nearest__po,["officename","pincode","Taluk","Districtname","statename"],tablefmt="fancy_grid"))
-            print("PRESS Enter to continue!!!")
-            next=input()
-            clear_screen()
+            Press_Enter()
             Customer_Menu()
         else:
-            print("District not found!!!\nTry Again!!!")
-            time.sleep(2)
-            clear_screen()
+            print("District not found!!!")
+            Press_Enter()
             Customer_Menu()
             
         
     elif opt==3:
         clear_screen()
+        title()
         print(figlet_format("Postage Calculator",font="mini"))
         mass=float(input("Enter weight of your parcel(in grams) : "))
         sender=input("Enter your address")
         receiver=input("Enter the reciever's address")
         distance=calculate_distance(sender,receiver)
         print(calculate_parcel_cost(distance,mass))
-        print("PRESS Enter to continue!!!")
-        next=input()
-        clear_screen()
+        Press_Enter()
         Customer_Menu()
         
     elif opt==0:
@@ -322,97 +363,111 @@ def Customer_Menu():
         
     else:
         print("INVAILD INPUT\ntry again...")
-        time.sleep(2)
-        clear_screen()
+        Press_Enter()
         Customer_Menu()
 
 def Staff_Menu():
+    title()
+    print(figlet_format("Menu",font="mini"))
     print("[1]Parcel Management")
     print("[2]Customer Services")
     print("[3]Complaint and Query Management")
     print("[0]Logout")
-    opt=int(input("Enter option :"))
-    if opt==1:
+    opt=input("Enter option :")
+    if opt=="1":
         clear_screen()
         parcel_management_menu()
-    elif opt==2:
+    elif opt=="2":
         clear_screen()
         Customer_service_menu()
-    elif opt==3:
+    elif opt=="3":
         clear_screen()
         Complaint_menu()
-    elif opt==0:
+    elif opt=="0":
         clear_screen()
         menu()
     else:
         print("Invaild Input\nTry again")
-        next=input()
-        clear_screen()
+        Press_Enter()
         Staff_Menu()
 
 def parcel_management_menu():
+    title()
+    print(figlet_format("Parcel Management",font="mini"))
     print("[1]Register a New Parcel")
     print("[2]Update Parcel Status")
     print("[3]Track Parcel by ID")
     print("[4]View All Parcels by Status")
-    opt=int(input("Enter option :"))
-    if opt==1:
+    print("[0]Exit")
+    opt=input("Enter option :")
+    if opt=="1":
+        clear_screen()
+        title()
+        print(figlet_format("Register New Parcel",font="mini"))
         To=input("Enter Recievers Address :")
         From=input("Enter Senders Address :")
         cursor.execute("select PID from parcel_details order by PID desc;")
         last_PID=cursor.fetchone()[0]
-        current_PID=last_PID+1
+        try:
+            current_PID=last_PID+1
+        except TypeError:
+            current_PID=1
         print("Parcel ID :",current_PID)
         while cursor.nextset():
             cursor.fetchall()
-        cursor.execute("insert into parcel_details values(%s,false,false,false,false,%s,%s);",(current_PID,From,To))
-        mydb.commit()
-        print("Press Enter To Continue!!!")
-        input()
-        clear_screen()
-        Staff_Menu()
+        try:
+            cursor.execute("insert into parcel_details values(%s,false,false,false,false,%s,%s);",(current_PID,From,To))
+            mydb.commit()
+        except Exception:
+            print("Something Went Wrong")
+        Press_Enter()
+        parcel_management_menu()
         
-    elif opt==2:
+    elif opt=="2":
         get_Lists("PID",PID_List,"parcel_details")
+        clear_screen()
+        title()
+        print(figlet_format("Update Parcel Status",font="mini"))
         PID=int(input("Enter parcel ID :"))
         if PID not in PID_List:
-            print("INCORRECT ID\nTry again!!!")
-            time.sleep(2)
-            clear_screen()
+            print("INCORRECT ID!!!")
+            Press_Enter()
             parcel_management_menu()
         else:
             cursor.execute(f"select * from parcel_details where PID ={PID}")
             info=cursor.fetchone()
-            print(info)
+            # print(info)
             track_parcel(info,True)
-    elif opt==3:
+    elif opt=="3":
+        clear_screen()
+        title()
+        print(figlet_format("Track Parcel",font="mini"))
         PID=int(input("Enter parcel ID :"))
         cursor.execute(f"select * from parcel_details where PID={PID}")
         info=cursor.fetchone()
         track_parcel(info)
-        print("PRESS Enter to continue!!!")
-        next=input()
-        clear_screen()
+        Press_Enter()
         parcel_management_menu()
-    elif opt==4:
+    elif opt=="4":
+        clear_screen()
+        title()
+        print(figlet_format("View All Parcels by Status",font="mini"))
         print("[1]In Transit")
         print("[2]Out for Delivery")
         print("[3]Deliverd")
-        print("[3]Returned")
+        print("[4]Returned")
+        print("[0]Exit")
         inp=(input("Enter option :"))
         if inp=="1":
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=false and delivered=false and returned=false")
             out=cursor.fetchall()
             if len(out)!=0:
-                print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
-                print("PRESS Enter to continue!!!")
-                next=input()
-                clear_screen()
+                print(tabulate(out,["PID","Password","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+                Press_Enter()
                 parcel_management_menu()
             else:
                 print("No data found!!!")
-                next=input()
-                clear_screen()
+                Press_Enter()
                 parcel_management_menu()
                 
         elif inp=="2":
@@ -420,81 +475,95 @@ def parcel_management_menu():
             out=cursor.fetchall()
             if len(out)!=0:
                 print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
-                print("PRESS Enter to continue!!!")
-                next=input()
-                clear_screen()
+                Press_Enter()
                 parcel_management_menu()
             else:
                 print("No data found!!!")
-                next=input()
-                clear_screen()
+                Press_Enter()
                 parcel_management_menu()
         if inp=="3":
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=true and returned=false")
             out=cursor.fetchall()
             if len(out)!=0:
                 print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
-                print("PRESS Enter to continue!!!")
-                next=input()
-                clear_screen()
+                Press_Enter()
                 parcel_management_menu()
             else:
                 print("No data found!!!")
-                next=input()
-                clear_screen()
+                Press_Enter()
                 parcel_management_menu()
         if inp=="4":
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=true and returned=true")
             out=cursor.fetchall()
             if len(out)!=0:
                 print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
-                print("PRESS Enter to continue!!!")
-                next=input()
-                clear_screen()
+                Press_Enter()
                 parcel_management_menu()
             else:
                 print("No data found!!!")
-                print("PRESS Enter to continue!!!")
-                next=input()
-                clear_screen()
+                Press_Enter()
                 parcel_management_menu()
+        if inp=='0':
+            clear_screen()
+            parcel_management_menu()
+        else:
+            print("Invaild Input")
+            Press_Enter()
+            parcel_management_menu()
+    
+    elif opt=="0":
+        clear_screen()
+        Staff_Menu()
+        
+    else:
+        print("INVAILD INPUT")
+        Press_Enter()
+        parcel_management_menu()
 
 def Customer_service_menu():
+    title()
+    print(figlet_format("Customer Management",font="mini"))
     print("[1]Register New Customer")
     print("[2]Search Customer by ID or Name")
-    opt=int(input("Enter option :"))
-    if opt==1:
+    print("[0]Exit")
+    opt=input("Enter option :")
+    if opt=="1":
+        clear_screen()
         Register_Customer()
-    elif opt==2:
+    elif opt=="2":
         UID=input("Enter User ID or email:")
-        cursor.execute("select * from customer where UID=%s or email=%s;",(UID,UID))
+        cursor.execute("select * from customer_details where UID=%s or email=%s;",(UID,UID))
         info=cursor.fetchall()
         if len(info)!=0:
             print(tabulate(info,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
-            print("PRESS Enter to continue!!!")
-            next=input()
-            clear_screen()
+            Press_Enter()
             Customer_service_menu()
         else:
             print("No User found!!!")
-            print("PRESS Enter to continue!!!")
-            next=input()
-            clear_screen()
+            Press_Enter()
             Customer_service_menu()
+            
+    elif opt=="0":
+        clear_screen()
+        Staff_Menu()
             
     else:
         print("INVAILD INPUT")
-        print("PRESS Enter to continue!!!")
-        next=input()
-        clear_screen()
+        Press_Enter()
         Customer_service_menu()
 
 def Complaint_menu():
+    title()
+    print(figlet_format("Complaint Management",font="mini"))
     print("[1]Register New Complaint")
     print("[2]View All Complaints")
     print("[3]Search Complaints by Customer ID")
-    opt=int(input("Enter option :"))
-    if opt==1:
+    print("[0]Exit")
+    opt=input("Enter option :")
+    if opt=="1":
+        clear_screen()
+        title()
+        print(figlet_format("New Complaint",font="mini"))
         CID=get_UID("complaint","CID")
         complainant=input("Enter complainant's name :")
         complainant_ID=input("Enter complainant's ID :")
@@ -504,51 +573,52 @@ def Complaint_menu():
         try:
             cursor.execute("insert into complaint values(%s,%s,%s,%s,%s);",(CID,complainant,complainant_ID,Complaint,date))
             mydb.commit()
-            print("Complaint Filed successfully!!!\nPress Enter to continue")
-            next=input()
-            clear_screen()
+            print("Complaint Filed successfully!!!")
+            Press_Enter()
             Complaint_menu()
         except Exception:
             print("Compalint too Long")
-            print("Press ENTER to continue!!")
-            next=input()
-            clear_screen()
+            Press_Enter()
             Complaint_menu()
         
-    elif opt==2:
+    elif opt=="2":
+        clear_screen()
+        title()
         cursor.execute("select complainant_ID,complainant_name,complaint,date_of_complaint from complaint;")#TODO change issuer ro complainant
         data=cursor.fetchall()
         if len(data)!=0:
             print(tabulate(data,["Complainant ID","Complainant","Complaint","Date of complaint"],tablefmt="fancy_grid"))
         else:
             print("No complaint found!!!")
-        print("Press ENTER to continue")
-        next=input()
-        clear_screen()
+        Press_Enter()
         Complaint_menu()
-    elif opt==3:
+    elif opt=="3":
+        clear_screen()
+        title()
         UID=input("Enter Customer ID :")
         cursor.execute(f"select complainant_ID,complainant_name,complaint,date_of_complaint from complaint where complainant_ID ={UID}; ")
         info=cursor.fetchall()
         if len(info)==0:
-            print("No complaint Found!!!\nPress ENTER to Continue")
-            input()
-            clear_screen()
+            print("No complaint Found!!!")
+            Press_Enter()
             Complaint_menu()
         else:
             print(tabulate(info,["Complainant ID","Complainant","Complaint","Date of complaint"],tablefmt="fancy_grid"))
-            print("Press ENTER to Continue")
-            input()
-            clear_screen()
+            Press_Enter()
             Complaint_menu()
-    else:
-        print("INVAILD INPUT\n Try Again\Press ENTER to Continue")
-        input()
+            
+    elif opt=="0":
         clear_screen()
+        Staff_Menu()
+    else:
+        print("INVAILD INPUT\n Try Again")
+        Press_Enter()
         Complaint_menu()
         
 
 def Admin_Menu():
+    title()
+    print(figlet_format("Menu",font="mini"))
     print("[1]Staff management")
     print("[2]Customer Management")
     print("[0]Logout")
@@ -560,43 +630,48 @@ def Admin_Menu():
         clear_screen()
         Customer_Management_menu()
     elif opt=="0":
-        pass
+        clear_screen()
+        menu()
     else:
-        pass
+        print("INVAILD INPUT")
+        Press_Enter()
+        Admin_Menu()
  
 def Register_Staff():
+    title()
     get_Lists("email",SEmail_List,"staff_details")
     email=input("Enter Employye's Email")
     if email in SEmail_List:#TODO check this and adjust the code
-        print("User already exist...Try Again\nPress ENTER to Continue")
-        input()
-        clear_screen()
+        print("User already exist...Try Again")
+        Press_Enter()
         Register_Staff()
     else:
-        password=input("Enter Password :")
+        password=ask_pass()
         name=input("Enter the name of Employee :")
-        print("This is your UserId")
         SID=get_UID("staff_details","SID")
-        cursor.execute("insert into staff_details values(%s,%s,%s,%s)",(SID,password,name,email))
-        mydb.commit()
-        print("Press ENTER to continue")
-        input()
-        clear_screen()
+        cursor.fetchall()
+        try:
+            cursor.execute("insert into staff_details values(%s,%s,%s,%s);",(SID,password,name,email))
+            mydb.commit()
+            print("This is your Staff Id :",SID)
+        except:
+            print("Something Went Wrong")
+        Press_Enter()
         Admin_Menu()
         
 def Update_Staff():
+    title()
     get_Lists("SID",SID_List,"staff_details")
     SId=int(input("Enter the Staff ID :"))
     if SId not in SID_List:
-        print("No Staff found with SID",SId,"\nTry Again\nPress ENTER to Continue")
-        input()
-        clear_screen()
+        print("No Staff found with SID",SId,"\nTry Again")
+        Press_Enter()
         Update_Staff()
         
     else:
         cursor.execute(f"select * from staff_details where SID={SId};")
         data=cursor.fetchone()
-        print(data)
+        # print(data)
         print(tabulate([data],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
         opt=input("Do you want to update this ???(y/n)")
         if opt.upper() =="Y":
@@ -609,129 +684,158 @@ def Update_Staff():
                 try:
                     cursor.execute("update staff_details set email=%s where SID=%s",(New_Email,SId))
                     mydb.commit()
-                    print("Updation Successful\nPress ENTER to Continue")
-                    input()
-                    clear_screen()
+                    print("Updation Successful")
+                    Press_Enter()
                     Admin_Menu()
                     
                 except Exception:
-                    print("Updation Unsuccessful\nTry again\Press ENTER to Continue")
-                    input()
-                    clear_screen()
+                    print("Updation Unsuccessful\nTry again")
+                    Press_Enter()
+                    Update_Staff()
+            elif inp=="2":
+                New_Name=input("Enter Updated name :")
+                try:
+                    cursor.execute("update staff_details set name=%s where SID=%s",(New_Name,SId))
+                    mydb.commit()
+                    print("Updation Successful")
+                    Press_Enter()
+                    Admin_Menu()
+                    
+                except Exception:
+                    print("Updation Unsuccessful\nTry again")
+                    Press_Enter()
                     Update_Staff()
 
         
 def staff_management_menu():    
+    title()
+    print(figlet_format("Staff Management",font="mini"))
     print("[1]Register New Staff Member")
     print("[2]Update Staff Information")
     print("[3]View all Staff")
     print("[4]Remove Staff Members")
-    opt=int(input("Enter option :"))
-    if opt==1:
+    print("[0]Exit")
+    opt=input("Enter option :")
+    if opt=="1":
+        clear_screen()
         Register_Staff()
-    elif opt==2:
+    elif opt=="2":
+        clear_screen()
         Update_Staff()
-    elif opt==3:
+    elif opt=="3":
+        clear_screen()
+        title()
+        print(figlet_format("View All Staff",font="mini"))
         cursor.execute("Select * from staff_details;")
         details=cursor.fetchall()
-        print(tabulate([details],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
-        print("Press ENTER to Continue")
-        input()
-        clear_screen()
+        print(tabulate(details,["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
+        Press_Enter()
         Admin_Menu()
-    elif opt==4:
+    elif opt=="4":
+        clear_screen()
+        title()
+        print(figlet_format("Remove Staff",font="mini"))
         SId=input("Enter SID of Staff to remove :")
-        inp=input("Are You sure to remove this staff:")
+        cursor.execute(f"select SID,name,email from staff_details where SID ={SId};")
+        data=cursor.fetchone()
+        print(tabulate([data],["User ID","Email","password"],tablefmt="fancy_grid"))
+        inp=input("Are You sure to remove this staff(y/n)")
         if inp.lower()=="y":
-            AID=input("Enter Your Admin ID :")
+            get_Lists("AID",AID_List,"admin_details")
+            AID=int(input("Enter Your Admin ID :"))
             if AID not in AID_List:
-                print("Incorrect Admin ID\nPress Enter To navigate to Admin Menu")
-                input()
-                clear_screen()
+                print("Incorrect Admin ID")
+                Press_Enter()
                 Admin_Menu()
             else:
-                cursor.execute(f"select password from staff_details where AID ='{AID}'")
+                cursor.execute(f"select password from admin_details where AID ={AID}")
                 user_password=cursor.fetchone()[0]
-                password=input("Enter password : ")
+                password=ask_pass()
                 if user_password==password:
-                    cursor.execute("DELETE FROM staff_details WHERE SID=%s;",(SId))
+                    cursor.execute(f"DELETE FROM staff_details WHERE SID={SId};")
                     mydb.commit()
-                    print("Staff deleted Successfully\nPress ENTER to continue")
-                    input()
-                    clear_screen()
+                    print("Staff deleted Successfully")
+                    Press_Enter()
                     Admin_Menu()
                 else:
-                    print("Wrong password...\nPress ENTER to continue")
-                    input()
-                    clear_screen()
+                    print("Wrong password...")
+                    Press_Enter()
                     staff_management_menu()
         elif inp.lower()=="n":
-            print("Press ENTER to Continue")
-            input()
-            clear_screen()
+            Press_Enter()
             Admin_Menu()
         else:
             print("INVALID INPUT\nTry Again")
-            print("Press ENTER to continue")
-            input()
-            clear_screen()
+            Press_Enter()
             staff_management_menu()
+            
+    elif opt=="0":
+        clear_screen()
+        Admin_Menu()
  
 def Customer_Management_menu():
+    title()
+    print(figlet_format("Customer Management",font="mini"))
     print("[1]View Customer Records")
     print("[2]Delete Customer Data")
+    print("[0]Exit")
     opt=input("Enter option :")
     if opt=="1":
-        cursor.execute("select * from customer ;")
+        cursor.execute("select * from customer_details ;")
         data=cursor.fetchall()
-        print(tabulate([data],["User ID","Email","password"],tablefmt="fancy_grid"))
-        print("Press ENTER to continue")
-        input()
-        clear_screen()
+        if len(data)!=0:
+            print(tabulate(data,["User ID","password","name","email"],tablefmt="fancy_grid"))
+        else:
+            print("There is No Customer Registered")
+        Press_Enter()
         Customer_Management_menu()
     elif opt=="2":
         UId=input("Enter User ID of User to remove :")
-        inp=input("Are You sure to remove this staff:")
+        cursor.execute(f"select UID,name,email from customer_details where UID={UId}")
+        info=cursor.fetchone()
+        print(tabulate([info],["UID","Name","Email"],tablefmt="fancy_grid"))
+        inp=input("Are You sure to remove this User(y/n)")
         if inp.lower()=="y":
-            AID=input("Enter Your Admin ID :")
+            AID=int(input("Enter Your Admin ID :"))
             if AID not in AID_List:
-                print("Incorrect Admin ID\nPress Enter To navigate to Admin Menu")
-                input()
-                clear_screen()
+                print("Incorrect Admin ID")
+                Press_Enter()
                 Customer_Management_menu()
             else:
-                cursor.execute(f"select password from customer where UID ='{UId}'")
+                cursor.execute(f"select password from customer_details where UID ={UId}")
                 user_password=cursor.fetchone()[0]
-                password=input("Enter password : ")
+                password=ask_pass()
                 if user_password==password:
-                    cursor.execute("DELETE FROM customer WHERE UID=%s;",(UId))
+                    cursor.execute(f"DELETE FROM customer_details WHERE UID={UId};")
                     mydb.commit()
-                    print("Customer deleted Successfully\nPress ENTER to continue")
-                    input()
-                    clear_screen()
+                    print("Customer deleted Successfully")
+                    Press_Enter()
                     Admin_Menu()
                 else:
-                    print("Wrong password...\nPress ENTER to continue")
-                    input()
-                    clear_screen()
+                    print("Wrong password...")
+                    Press_Enter()
                     Customer_Management_menu()
         elif inp.lower()=="n":
-            print("Press ENTER to Continue")
-            input()
-            clear_screen()
+            Press_Enter()
             Customer_Management_menu()
         else:
             print("INVALID INPUT\nTry Again")
-            print("Press ENTER to continue")
-            input()
-            clear_screen()
+            Press_Enter()
             Customer_Management_menu()
-    else:  
-        print("INVAILD INPUT\nPress ENTER to continue")
-        input()
+    elif opt=="0":
         clear_screen()
+        Admin_Menu()
+    else:  
+        print("INVAILD INPUT")
+        Press_Enter()
         Customer_Management_menu()
 
-if __name__=="__main__":
+if __name__=="__main__" and state==True:
     clear_screen()
     menu()
+    
+if __name__=="__main__" and state==False:
+    clear_screen()
+    print(Fore.RED+"Please run the setup File First"+Style.RESET_ALL)
+   
+    
