@@ -1,5 +1,6 @@
 import mysql.connector as con
 import csv
+import mysql.connector.errors
 from geopy.geocoders import Nominatim
 from geopy.distance import distance
 from math import ceil
@@ -9,6 +10,7 @@ from maskpass import advpass
 from colorama import Fore,Style
 from pyfiglet import figlet_format
 from datetime import datetime
+## mysql-connector==2.2.9
 
 UID_List=[]
 SID_List=[]
@@ -18,9 +20,16 @@ PID_List=[]
 Email_List=[]
 attempts=0
 
-mydb=con.connect(host="localhost",user="root",passwd="")
-cursor=mydb.cursor()
-cursor.execute("use postoffice;")
+def connect():
+    mydb=con.connect(host="localhost",user="root",passwd="uhsgnamih")
+    cursor=mydb.cursor()
+    try:
+        cursor.execute("use postoffice;")
+        return cursor,mydb,True
+    except mysql.connector.errors.ProgrammingError:
+        print("Please run the setUp file First")
+        return cursor,mydb,False
+cursor,mydb,state=connect()
 
 def Press_Enter():
     print("Press ENTER to Continue")
@@ -240,8 +249,11 @@ def Register_Customer():
         print("This is your UserId:",Userid)
         while cursor.nextset():
             cursor.fetchall()
-        cursor.execute("INSERT INTO customer_details (UID, email, password,name) VALUES (%s, %s, %s,%s)", (Userid, email, password,name))
-        mydb.commit()
+        try:
+            cursor.execute("INSERT INTO customer_details (UID, email, password,name) VALUES (%s, %s, %s,%s)", (Userid, email, password,name))
+            mydb.commit()
+        except Exception:
+            print("Something Went Wrong")
         clear_screen()
         login_Customer()
         
@@ -403,8 +415,11 @@ def parcel_management_menu():
         print("Parcel ID :",current_PID)
         while cursor.nextset():
             cursor.fetchall()
-        cursor.execute("insert into parcel_details values(%s,false,false,false,false,%s,%s);",(current_PID,From,To))
-        mydb.commit()
+        try:
+            cursor.execute("insert into parcel_details values(%s,false,false,false,false,%s,%s);",(current_PID,From,To))
+            mydb.commit()
+        except Exception:
+            print("Something Went Wrong")
         Press_Enter()
         parcel_management_menu()
         
@@ -635,9 +650,12 @@ def Register_Staff():
         name=input("Enter the name of Employee :")
         SID=get_UID("staff_details","SID")
         cursor.fetchall()
-        cursor.execute("insert into staff_details values(%s,%s,%s,%s);",(SID,password,name,email))
-        mydb.commit()
-        print("This is your Staff Id :",SID)
+        try:
+            cursor.execute("insert into staff_details values(%s,%s,%s,%s);",(SID,password,name,email))
+            mydb.commit()
+            print("This is your Staff Id :",SID)
+        except:
+            print("Something Went Wrong")
         Press_Enter()
         Admin_Menu()
         
@@ -812,6 +830,12 @@ def Customer_Management_menu():
         Press_Enter()
         Customer_Management_menu()
 
-if __name__=="__main__":
+if __name__=="__main__" and state==True:
     clear_screen()
     menu()
+    
+if __name__=="__main__" and state==False:
+    clear_screen()
+    print(Fore.RED+"Please run the setup File First"+Style.RESET_ALL)
+   
+    
