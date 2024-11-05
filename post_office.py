@@ -11,6 +11,7 @@ from colorama import Fore,Style
 from pyfiglet import figlet_format
 from datetime import datetime
 
+
 UID_List=[]
 SID_List=[]
 SEmail_List=[]
@@ -21,6 +22,7 @@ attempts=0
 
 def green_text(text:str):
     print(Fore.GREEN+text+Style.RESET_ALL)
+
 def red_text(text:str):
     print(Fore.RED+text+Style.RESET_ALL)
 
@@ -30,12 +32,12 @@ def connect():
     try:
         cursor.execute("use postoffice;")
         return cursor,mydb,True
+    
     except mysql.connector.errors.ProgrammingError:
         red_text("Please run the setUp file First")
         return cursor,mydb,False
     
 cursor,mydb,state=connect()
-
 
 def Press_Enter():
     print(Fore.BLUE+"\nPress ENTER to Continue"+Style.RESET_ALL)
@@ -51,9 +53,9 @@ def ask_pass():
         print("Lenght of password should be more than 8\nPress ENTER Try again")
         input()
         ask_pass()
+    
     else:
         return password
-        
 
 def get_Lists(string:str,to_List:list,from_table:str):
     if len(to_List)==0:
@@ -76,26 +78,21 @@ def get_UID(table:str,ID:str):
 def track_parcel(info:tuple,Update=False):
     try:
         if info[1]==0:
-            #kuch nahi
             print("[IN TRANSIT]       [OUT FOR DELIVERY]       [DELIVERD]")
-            
-        if info[1]==1 and info[2]==0 and info[3]==0 and info[4]==0 :
-            #in transit
+
+        elif info[1]==1 and info[2]==0 and info[3]==0 and info[4]==0 :
             print(Fore.GREEN+f"[IN TRANSIT]{Style.RESET_ALL}====   [OUT FOR DELIVERY]       [DELIVERD]")
-            
-        if info[1]==1 and info[2]==1 and info[3]==0 and info[4]==0  :
-            #out for delivery
-            print(f"{Fore.GREEN}[IN TRANSIT]{Style.RESET_ALL}======={Fore.GREEN}[OUT FOR DELIVERY]{Style.RESET_ALL}==     [DELIVERD]")
-            
-        if info[1]==1 and info[2]==1 and info[3]==1 and info[4]==0 :
-            #delivered
-            print(f"{Fore.GREEN}[IN TRANSIT]{Style.RESET_ALL}======={Fore.GREEN}[OUT FOR DELIVERY]{Style.RESET_ALL}======={Fore.GREEN}[DELIVERD]{Style.RESET_ALL}")
-            
-        if info[1]==1 and info[2]==1 and info[3]==1 and info[4]==1 :
-            #returned
+
+        elif info[1]==1 and info[2]==1 and info[3]==0 and info[4]==0  :
+            print(f"{Fore.GREEN}[IN TRANSIT]{Style.RESET_ALL}======={Fore.GREEN}[OUT FOR DELIVERY]{Style.RESET_ALL}==     [DELIVERD]") 
+
+        elif info[1]==1 and info[2]==1 and info[3]==1 and info[4]==0 :
+            print(f"{Fore.GREEN}[IN TRANSIT]{Style.RESET_ALL}======={Fore.GREEN}[OUT FOR DELIVERY]{Style.RESET_ALL}======={Fore.GREEN}[DELIVERD]{Style.RESET_ALL}")    
+
+        elif info[1]==1 and info[2]==1 and info[3]==1 and info[4]==1 :
             print(f"{Fore.GREEN}[IN TRANSIT]{Style.RESET_ALL}======={Fore.GREEN}[OUT FOR DELIVERY]{Style.RESET_ALL}========{Fore.GREEN}[DELIVERD]{Style.RESET_ALL}======={Fore.RED}[RETURNED]{Style.RESET_ALL}")
+
         if Update==True:
-            
             updated_status=list(info)
             opt=input("Do you want to Update???(y/n) :")
             if opt.upper()=="Y":
@@ -119,25 +116,30 @@ def track_parcel(info:tuple,Update=False):
                     clear_screen()
                     track_parcel(info,Update)
                 updated_status.append(updated_status[0])
-                # print(updated_status)
                 try:
                     cursor.execute("update parcel_details set PID=%s,in_transit=%s,out_for_delivery=%s,delivered=%s,returned=%s,sender_add=%s,reciever_add=%s where PID=%s", updated_status)
                     mydb.commit()
                     green_text("Updated!!!")
+                
                 except mysql.connector.errors:
                     red_text("Something went wrong while updating")
                 Press_Enter()
                 parcel_management_menu()
-            if opt.upper()=="N":
+            
+            elif opt.upper()=="N":
                 clear_screen()
                 parcel_management_menu()
-             
+                
+            else:
+                red_text("INVAILD INPUT")
+                Press_Enter()
+                track_parcel(info,Update)
+            
     except TypeError:
         red_text("INVAILD Parcel ID \nTry Again!!!")
         Press_Enter()
         Customer_Menu()
-        
-     
+
 def nearest_po(s:str):
     result_list=[]
     with open("post_office_data.csv","r") as f:
@@ -165,7 +167,6 @@ def calculate_parcel_cost(distance_km : float, weight_g : float):
         rate_per_km = 10  
     else:
         rate_per_km = 20  
-
     try:
         cost = 10+rate_per_km * distance_km
         return ceil(cost/100)
@@ -232,6 +233,7 @@ def login_Customer():
         else:
             red_text("Incorrect password")
             login_Customer()
+
 def Register_Customer():
     title()
     print(figlet_format("Register",font="mini"))
@@ -254,7 +256,6 @@ def Register_Customer():
             red_text("Something Went Wrong")
         clear_screen()
         login_Customer()
-        
 
 def Login_Staff():
     title()
@@ -262,7 +263,6 @@ def Login_Staff():
     get_Lists("email",SEmail_List,"staff_details")
     Email=input("Enter your Employee Email :")
     if Email not in SEmail_List:
-        # print(SEmail_List)
         red_text("Incorrect Email...")
         Press_Enter()
         Login_Staff()
@@ -274,17 +274,10 @@ def Login_Staff():
             clear_screen()
             Staff_Menu()
         else:
-            # attempts+=1
-            if attempts<=3:
-                red_text("Incorrect Password...")
-                Press_Enter()
-                Login_Staff()
-            else:
-                red_text("3 Unsuccessful Attempts")
-                Press_Enter()
-                menu()
-                #TODO attempts method
-   
+            red_text("INCORRECT PASSWORD")
+            Press_Enter()
+            Login_Staff()
+
 def Login_Admin():
     get_Lists("AID",AID_List,"admin_details")
     title()
@@ -295,7 +288,6 @@ def Login_Admin():
         red_text("ID should be a number!")
         Login_Admin()
     if AID not in AID_List:
-        # print(AID_List)
         red_text("Incorrect Admin ID...")
         Press_Enter()
         menu()
@@ -318,6 +310,7 @@ def Customer_Menu():
     print("[1]Track")
     print("[2]Locate post office") #Not sure how to make it work
     print("[3]Postage Calculator")
+    print("[4]File Complaint")
     print("[0]Logout")
     # print("")#TODO more features
     opt=input("Enter option :")
@@ -335,7 +328,6 @@ def Customer_Menu():
         except ValueError:
             red_text("ID should be a number")
             Customer_Menu()
-        
     elif opt=="2":
         clear_screen()
         title()
@@ -350,8 +342,6 @@ def Customer_Menu():
             red_text("District not found!!!")
             Press_Enter()
             Customer_Menu()
-            
-        
     elif opt=="3":
         clear_screen()
         title()
@@ -363,11 +353,29 @@ def Customer_Menu():
         print(calculate_parcel_cost(distance,mass))
         Press_Enter()
         Customer_Menu()
-        
+    elif opt=="4":
+        clear_screen()
+        title()
+        print(figlet_format("New Complaint",font="mini"))
+        CID=get_UID("complaint","CID")
+        complainant=input("Enter Your name :")
+        complainant_ID=input("Enter your ID :")
+        Complaint=next_line(input("Enter your Complaint :"))
+        date = datetime.now().strftime('%Y-%m-%d')
+        cursor.reset()
+        try:
+            cursor.execute("insert into complaint values(%s,%s,%s,%s,%s);",(CID,complainant,complainant_ID,Complaint,date))
+            mydb.commit()
+            green_text("Complaint Filed successfully!!!")
+            Press_Enter()
+            Complaint_menu()
+        except Exception:
+            red_text("Compalint too Long")
+            Press_Enter()
+            Complaint_menu()
     elif opt=="0":
         clear_screen()
         menu()
-        
     else:
         red_text("INVAILD INPUT\ntry again...")
         Press_Enter()
