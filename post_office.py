@@ -25,7 +25,7 @@ def red_text(text:str):
     print(Fore.RED+text+Style.RESET_ALL)
 
 def connect():
-    mydb=con.connect(host="localhost",user="root",passwd="uhsgnamih")
+    mydb=con.connect(host="localhost",user="root",passwd="himangshu@1")
     cursor=mydb.cursor()
     try:
         cursor.execute("use postoffice;")
@@ -33,10 +33,12 @@ def connect():
     except mysql.connector.errors.ProgrammingError:
         red_text("Please run the setUp file First")
         return cursor,mydb,False
+    
 cursor,mydb,state=connect()
 
+
 def Press_Enter():
-    print("Press ENTER to Continue")
+    print(Fore.BLUE+"\nPress ENTER to Continue"+Style.RESET_ALL)
     input()
     clear_screen()
 
@@ -180,17 +182,17 @@ def menu():
     print("[2]Staff")
     print("[3]Admin")
     print("[0]Exit")
-    role=int(input("Enter role :"))
-    if role==1:
+    role=input("Enter role :")
+    if role=="1":
         clear_screen()
         Auth_Customer()
-    elif role==2:
+    elif role=="2":
         clear_screen()
         Login_Staff()
-    elif role==3:
+    elif role=="3":
         clear_screen()
         Login_Admin()
-    elif role==0:
+    elif role=="0":
         pass
     else:
         red_text("INVAILD INPUT TRY AGAIN")
@@ -223,22 +225,13 @@ def login_Customer():
     else:
         cursor.execute(f"select password from customer_details where email ='{email}'")
         user_password=cursor.fetchone()[0]
-        
         password=ask_pass()
         if user_password==password:
             clear_screen()
             Customer_Menu()
         else:
-            # attempts+=1
-            if attempts<=3:
-                red_text("Incorrect Password...")
-                Press_Enter()
-                login_Customer()
-            else:
-                red_text("3 Unsuccessful Attempts")
-                Press_Enter()
-                menu()
-                #TODO 3 attempt thing is not working come here again
+            red_text("Incorrect password")
+            login_Customer()
 def Register_Customer():
     title()
     print(figlet_format("Register",font="mini"))
@@ -296,7 +289,11 @@ def Login_Admin():
     get_Lists("AID",AID_List,"admin_details")
     title()
     print(figlet_format("Login",font="mini"))
-    AID=int(input("Enter Admin Id :"))
+    try:
+        AID=int(input("Enter Admin Id :"))
+    except ValueError:
+        red_text("ID should be a number!")
+        Login_Admin()
     if AID not in AID_List:
         # print(AID_List)
         red_text("Incorrect Admin ID...")
@@ -307,6 +304,7 @@ def Login_Admin():
         user_password=cursor.fetchone()[0]
         password=ask_pass()
         if user_password==password:
+            attempts=0
             clear_screen()
             Admin_Menu()
         else:
@@ -322,18 +320,23 @@ def Customer_Menu():
     print("[3]Postage Calculator")
     print("[0]Logout")
     # print("")#TODO more features
-    opt=int(input("Enter option :"))
-    if opt==1:
+    opt=input("Enter option :")
+    if opt=="1":
         clear_screen()
         title()
         print(figlet_format("Track",font="mini"))
-        PID=int(input("Enter parcel ID :"))
-        cursor.execute(f"select * from parcel_details where PID={PID}")
-        info=cursor.fetchone()
-        track_parcel(info)
-        Press_Enter()
-        Customer_Menu()
-    elif opt==2:
+        try:
+            PID=int(input("Enter parcel ID :"))
+            cursor.execute(f"select * from parcel_details where PID={PID}")
+            info=cursor.fetchone()
+            track_parcel(info)
+            Press_Enter()
+            Customer_Menu()
+        except ValueError:
+            red_text("ID should be a number")
+            Customer_Menu()
+        
+    elif opt=="2":
         clear_screen()
         title()
         print(figlet_format("Locate Post Office",font="mini"))
@@ -349,7 +352,7 @@ def Customer_Menu():
             Customer_Menu()
             
         
-    elif opt==3:
+    elif opt=="3":
         clear_screen()
         title()
         print(figlet_format("Postage Calculator",font="mini"))
@@ -361,7 +364,7 @@ def Customer_Menu():
         Press_Enter()
         Customer_Menu()
         
-    elif opt==0:
+    elif opt=="0":
         clear_screen()
         menu()
         
@@ -432,7 +435,11 @@ def parcel_management_menu():
         clear_screen()
         title()
         print(figlet_format("Update Parcel Status",font="mini"))
-        PID=int(input("Enter parcel ID :"))
+        try:
+            PID=int(input("Enter parcel ID :"))
+        except ValueError:
+            red_text("ID should be a number")
+            parcel_management_menu()
         if PID not in PID_List:
             red_text("INCORRECT ID!!!")
             Press_Enter()
@@ -440,13 +447,16 @@ def parcel_management_menu():
         else:
             cursor.execute(f"select * from parcel_details where PID ={PID}")
             info=cursor.fetchone()
-            # print(info)
             track_parcel(info,True)
     elif opt=="3":
         clear_screen()
         title()
         print(figlet_format("Track Parcel",font="mini"))
-        PID=int(input("Enter parcel ID :"))
+        try:
+            PID=int(input("Enter parcel ID :"))
+        except ValueError:
+            red_text("ID should be a number")
+            parcel_management_menu()
         cursor.execute(f"select * from parcel_details where PID={PID}")
         info=cursor.fetchone()
         track_parcel(info)
@@ -666,7 +676,11 @@ def Register_Staff():
 def Update_Staff():
     title()
     get_Lists("SID",SID_List,"staff_details")
-    SId=int(input("Enter the Staff ID :"))
+    try:
+        SId=int(input("Enter the Staff ID :"))
+    except ValueError:
+        print("ID should be a number")
+        Update_Staff()
     if SId not in SID_List:
         red_text("No Staff found with SID",SId,"\nTry Again")
         Press_Enter()
@@ -746,7 +760,11 @@ def staff_management_menu():
         inp=input("Are You sure to remove this staff?(y/n)")
         if inp.lower()=="y":
             get_Lists("AID",AID_List,"admin_details")
-            AID=int(input("Enter Your Admin ID :"))
+            try:
+                AID=int(input("Enter Your Admin ID :"))
+            except ValueError:
+                red_text("ID should be a number")
+                staff_management_menu()
             if AID not in AID_List:
                 red_text("Incorrect Admin ID")
                 Press_Enter()
@@ -800,7 +818,10 @@ def Customer_Management_menu():
         print(tabulate([info],["UID","Name","Email"],tablefmt="fancy_grid"))
         inp=input("Are You sure to remove this User(y/n)")
         if inp.lower()=="y":
-            AID=int(input("Enter Your Admin ID :"))
+            try:
+                AID=int(input("Enter Your Admin ID :"))
+            except ValueError:
+                red_text("ID should be a number")
             if AID not in AID_List:
                 red_text("Incorrect Admin ID")
                 Press_Enter()

@@ -30,7 +30,7 @@ def setup():
     from colorama import Fore,Style
 
 
-    mydb=mysql.connector.connect(host="localhost",user="root",passwd="uhsgnamih")
+    mydb=mysql.connector.connect(host="localhost",user="root",passwd="himangshu@1")
     cursor=mydb.cursor()
     cursor.execute("create database if not exists postoffice;")
     cursor.execute("use postoffice;")
