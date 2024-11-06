@@ -220,7 +220,7 @@ def login_Customer():
     get_Lists("email",Email_List,"customer_details")
     email=input("Enter your email : ")
     if email not in Email_List:
-        red_text("No User Found with email",email,)
+        red_text(f"No User Found with email :{email}")
         Press_Enter()
         login_Customer()
     else:
@@ -232,6 +232,7 @@ def login_Customer():
             Customer_Menu()
         else:
             red_text("Incorrect password")
+            Press_Enter()
             login_Customer()
 
 def Register_Customer():
@@ -427,7 +428,7 @@ def parcel_management_menu():
             current_PID=last_PID+1
         except TypeError:
             current_PID=1
-        print("Parcel ID :",green_text(f"{current_PID}"))
+        print(f"Parcel ID :{current_PID}")
         while cursor.nextset():
             cursor.fetchall()
         try:
@@ -690,7 +691,7 @@ def Update_Staff():
         print("ID should be a number")
         Update_Staff()
     if SId not in SID_List:
-        red_text("No Staff found with SID",SId,"\nTry Again")
+        red_text(f"No Staff found with SID : {SId}\nTry Again")
         Press_Enter()
         Update_Staff()
         
