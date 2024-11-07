@@ -12,6 +12,7 @@ from pyfiglet import figlet_format
 from datetime import datetime
 
 
+
 UID_List=[]
 SID_List=[]
 SEmail_List=[]
@@ -34,7 +35,6 @@ def connect():
         return cursor,mydb,True
     
     except mysql.connector.errors.ProgrammingError:
-        red_text("Please run the setUp file First")
         return cursor,mydb,False
     
 cursor,mydb,state=connect()
@@ -77,7 +77,7 @@ def get_UID(table:str,ID:str):
     
 def track_parcel(info:tuple,Update=False):
     try:
-        if info[1]==0:
+        if info[1]==0 and info[2]==0 and info[3]==0 and info[4]==0 :
             print("[IN TRANSIT]       [OUT FOR DELIVERY]       [DELIVERD]")
 
         elif info[1]==1 and info[2]==0 and info[3]==0 and info[4]==0 :
@@ -297,7 +297,6 @@ def Login_Admin():
         user_password=cursor.fetchone()[0]
         password=ask_pass()
         if user_password==password:
-            attempts=0
             clear_screen()
             Admin_Menu()
         else:
@@ -309,11 +308,10 @@ def Customer_Menu():
     title()
     print(figlet_format("Menu",font="mini"))
     print("[1]Track")
-    print("[2]Locate post office") #Not sure how to make it work
+    print("[2]Locate post office") 
     print("[3]Postage Calculator")
     print("[4]File Complaint")
     print("[0]Logout")
-    # print("")#TODO more features
     opt=input("Enter option :")
     if opt=="1":
         clear_screen()
@@ -504,7 +502,7 @@ def parcel_management_menu():
                 red_text("No data found!!!")
                 Press_Enter()
                 parcel_management_menu()
-        if inp=="3":
+        elif inp=="3":
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=true and returned=false")
             out=cursor.fetchall()
             if len(out)!=0:
@@ -515,7 +513,7 @@ def parcel_management_menu():
                 red_text("No data found!!!")
                 Press_Enter()
                 parcel_management_menu()
-        if inp=="4":
+        elif inp=="4":
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=true and returned=true")
             out=cursor.fetchall()
             if len(out)!=0:
@@ -526,7 +524,7 @@ def parcel_management_menu():
                 red_text("No data found!!!")
                 Press_Enter()
                 parcel_management_menu()
-        if inp=='0':
+        elif inp=='0':
             clear_screen()
             parcel_management_menu()
         else:
@@ -607,7 +605,7 @@ def Complaint_menu():
     elif opt=="2":
         clear_screen()
         title()
-        cursor.execute("select complainant_ID,complainant_name,complaint,date_of_complaint from complaint;")#TODO change issuer ro complainant
+        cursor.execute("select complainant_ID,complainant_name,complaint,date_of_complaint from complaint;")
         data=cursor.fetchall()
         if len(data)!=0:
             print(tabulate(data,["Complainant ID","Complainant","Complaint","Date of complaint"],tablefmt="fancy_grid"))
@@ -664,7 +662,7 @@ def Register_Staff():
     title()
     get_Lists("email",SEmail_List,"staff_details")
     email=input("Enter Employye's Email")
-    if email in SEmail_List:#TODO check this and adjust the code
+    if email in SEmail_List:
         red_text("User already exist...Try Again")
         Press_Enter()
         Register_Staff()
@@ -704,7 +702,6 @@ def Update_Staff():
         if opt.upper() =="Y":
             print("[1]Email")
             print("[2]Name")
-            #TODO Add more details in staff details
             inp=input("Enter your option :")
             if inp=="1":
                 New_Email=input("Enter new email :")
@@ -871,4 +868,3 @@ if __name__=="__main__" and state==True:
 if __name__=="__main__" and state==False:
     red_text("Please run the setup File First")
    
-    

@@ -1,21 +1,5 @@
 import subprocess
 
-'''
-Customer details
-UID(PK),name,email,password,history
-
-staff details
-SID(PK),name,SEmail,password
-
-Admin details
-AID(PK),name,password
-
-parcel details
-parcel_ID(PK),user,in_transit, out_for_delivery,delivered,returned,to,from
-
-Complaint
-CID(PK),issuer_name,issuer_ID,complaint,date of complaint
-'''
 def setup():
     try:
         # Use pip to install packages from the requirements.txt file
