@@ -183,7 +183,7 @@ def menu():
     print("[2]Staff")
     print("[3]Admin")
     print("[0]Exit")
-    role=input("Enter role :")
+    role=input("Enter role: ")
     if role=="1":
         clear_screen()
         Auth_Customer()
@@ -218,7 +218,7 @@ def login_Customer():
     title()
     print(figlet_format("Login",font="mini"))
     get_Lists("email",Email_List,"customer_details")
-    email=input("Enter your email : ")
+    email=input("Enter your email: ")
     if email not in Email_List:
         red_text(f"No User Found with email :{email}")
         Press_Enter()
@@ -239,7 +239,7 @@ def Register_Customer():
     title()
     print(figlet_format("Register",font="mini"))
     get_Lists("email",Email_List,"customer_details")
-    email=input("Enter Email :")
+    email=input("Enter Email: ")
     if email in Email_List:
         print("User already exist...moving to login page..")
         login_Customer()
@@ -262,7 +262,7 @@ def Login_Staff():
     title()
     print(figlet_format("Login",font="mini"))
     get_Lists("email",SEmail_List,"staff_details")
-    Email=input("Enter your Employee Email :")
+    Email=input("Enter your Employee Email: ")
     if Email not in SEmail_List:
         red_text("Incorrect Email...")
         Press_Enter()
@@ -284,7 +284,7 @@ def Login_Admin():
     title()
     print(figlet_format("Login",font="mini"))
     try:
-        AID=int(input("Enter Admin Id :"))
+        AID=int(input("Enter Admin Id: "))
     except ValueError:
         red_text("ID should be a number!")
         Login_Admin()
@@ -312,13 +312,13 @@ def Customer_Menu():
     print("[3]Postage Calculator")
     print("[4]File Complaint")
     print("[0]Logout")
-    opt=input("Enter option :")
+    opt=input("Enter option: ")
     if opt=="1":
         clear_screen()
         title()
         print(figlet_format("Track",font="mini"))
         try:
-            PID=int(input("Enter parcel ID :"))
+            PID=int(input("Enter parcel ID: "))
             cursor.execute(f"select * from parcel_details where PID={PID}")
             info=cursor.fetchone()
             track_parcel(info)
@@ -331,7 +331,7 @@ def Customer_Menu():
         clear_screen()
         title()
         print(figlet_format("Locate Post Office",font="mini"))
-        district=input("Enter District:")
+        district=input("Enter District: ")
         nearest__po=nearest_po(district)
         if len(nearest__po)!=0:
             print(tabulate(nearest__po,["officename","pincode","Taluk","Districtname","statename"],tablefmt="fancy_grid"))
@@ -345,9 +345,9 @@ def Customer_Menu():
         clear_screen()
         title()
         print(figlet_format("Postage Calculator",font="mini"))
-        mass=float(input("Enter weight of your parcel(in grams) : "))
-        sender=input("Enter your address")
-        receiver=input("Enter the reciever's address")
+        mass=float(input("Enter weight of your parcel(in grams): "))
+        sender=input("Enter your address: ")
+        receiver=input("Enter the reciever's address: ")
         distance=calculate_distance(sender,receiver)
         print(calculate_parcel_cost(distance,mass))
         Press_Enter()
@@ -357,9 +357,9 @@ def Customer_Menu():
         title()
         print(figlet_format("New Complaint",font="mini"))
         CID=get_UID("complaint","CID")
-        complainant=input("Enter Your name :")
-        complainant_ID=input("Enter your ID :")
-        Complaint=next_line(input("Enter your Complaint :"))
+        complainant=input("Enter Your name: ")
+        complainant_ID=input("Enter your ID: ")
+        Complaint=next_line(input("Enter your Complaint: "))
         date = datetime.now().strftime('%Y-%m-%d')
         cursor.reset()
         try:
@@ -387,7 +387,7 @@ def Staff_Menu():
     print("[2]Customer Services")
     print("[3]Complaint and Query Management")
     print("[0]Logout")
-    opt=input("Enter option :")
+    opt=input("Enter option: ")
     if opt=="1":
         clear_screen()
         parcel_management_menu()
@@ -413,13 +413,13 @@ def parcel_management_menu():
     print("[3]Track Parcel by ID")
     print("[4]View All Parcels by Status")
     print("[0]Exit")
-    opt=input("Enter option :")
+    opt=input("Enter option: ")
     if opt=="1":
         clear_screen()
         title()
         print(figlet_format("Register New Parcel",font="mini"))
-        To=input("Enter Recievers Address :")
-        From=input("Enter Senders Address :")
+        To=input("Enter Recievers Address: ")
+        From=input("Enter Senders Address: ")
         cursor.execute("select PID from parcel_details order by PID desc;")
         last_PID=cursor.fetchone()[0]
         try:
@@ -443,7 +443,7 @@ def parcel_management_menu():
         title()
         print(figlet_format("Update Parcel Status",font="mini"))
         try:
-            PID=int(input("Enter parcel ID :"))
+            PID=int(input("Enter parcel ID: "))
         except ValueError:
             red_text("ID should be a number")
             parcel_management_menu()
@@ -460,7 +460,7 @@ def parcel_management_menu():
         title()
         print(figlet_format("Track Parcel",font="mini"))
         try:
-            PID=int(input("Enter parcel ID :"))
+            PID=int(input("Enter parcel ID: "))
         except ValueError:
             red_text("ID should be a number")
             parcel_management_menu()
@@ -478,7 +478,7 @@ def parcel_management_menu():
         print("[3]Deliverd")
         print("[4]Returned")
         print("[0]Exit")
-        inp=(input("Enter option :"))
+        inp=(input("Enter option: "))
         if inp=="1":
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=false and delivered=false and returned=false")
             out=cursor.fetchall()
@@ -547,12 +547,12 @@ def Customer_service_menu():
     print("[1]Register New Customer")
     print("[2]Search Customer by ID or Name")
     print("[0]Exit")
-    opt=input("Enter option :")
+    opt=input("Enter option: ")
     if opt=="1":
         clear_screen()
         Register_Customer()
     elif opt=="2":
-        UID=input("Enter User ID or email:")
+        UID=input("Enter User ID or email: ")
         cursor.execute("select * from customer_details where UID=%s or email=%s;",(UID,UID))
         info=cursor.fetchall()
         if len(info)!=0:
@@ -580,15 +580,15 @@ def Complaint_menu():
     print("[2]View All Complaints")
     print("[3]Search Complaints by Customer ID")
     print("[0]Exit")
-    opt=input("Enter option :")
+    opt=input("Enter option: ")
     if opt=="1":
         clear_screen()
         title()
         print(figlet_format("New Complaint",font="mini"))
         CID=get_UID("complaint","CID")
-        complainant=input("Enter complainant's name :")
-        complainant_ID=input("Enter complainant's ID :")
-        Complaint=next_line(input("Enter his Complaint :"))
+        complainant=input("Enter complainant's name: ")
+        complainant_ID=input("Enter complainant's ID: ")
+        Complaint=next_line(input("Enter his Complaint: "))
         date = datetime.now().strftime('%Y-%m-%d')
         cursor.reset()
         try:
@@ -616,7 +616,7 @@ def Complaint_menu():
     elif opt=="3":
         clear_screen()
         title()
-        UID=input("Enter Customer ID :")
+        UID=input("Enter Customer ID: ")
         cursor.execute(f"select complainant_ID,complainant_name,complaint,date_of_complaint from complaint where complainant_ID ={UID}; ")
         info=cursor.fetchall()
         if len(info)==0:
@@ -643,7 +643,7 @@ def Admin_Menu():
     print("[1]Staff management")
     print("[2]Customer Management")
     print("[0]Logout")
-    opt=input("Enter option :")
+    opt=input("Enter option: ")
     if opt=="1":
         clear_screen()
         staff_management_menu()
@@ -661,14 +661,14 @@ def Admin_Menu():
 def Register_Staff():
     title()
     get_Lists("email",SEmail_List,"staff_details")
-    email=input("Enter Employye's Email")
+    email=input("Enter Employye's Email: ")
     if email in SEmail_List:
         red_text("User already exist...Try Again")
         Press_Enter()
         Register_Staff()
     else:
         password=ask_pass()
-        name=input("Enter the name of Employee :")
+        name=input("Enter the name of Employee: ")
         SID=get_UID("staff_details","SID")
         cursor.fetchall()
         try:
@@ -684,7 +684,7 @@ def Update_Staff():
     title()
     get_Lists("SID",SID_List,"staff_details")
     try:
-        SId=int(input("Enter the Staff ID :"))
+        SId=int(input("Enter the Staff ID: "))
     except ValueError:
         print("ID should be a number")
         Update_Staff()
@@ -702,9 +702,9 @@ def Update_Staff():
         if opt.upper() =="Y":
             print("[1]Email")
             print("[2]Name")
-            inp=input("Enter your option :")
+            inp=input("Enter your option: ")
             if inp=="1":
-                New_Email=input("Enter new email :")
+                New_Email=input("Enter new email: ")
                 try:
                     cursor.execute("update staff_details set email=%s where SID=%s",(New_Email,SId))
                     mydb.commit()
@@ -717,7 +717,7 @@ def Update_Staff():
                     Press_Enter()
                     Update_Staff()
             elif inp=="2":
-                New_Name=input("Enter Updated name :")
+                New_Name=input("Enter Updated name: ")
                 try:
                     cursor.execute("update staff_details set name=%s where SID=%s",(New_Name,SId))
                     mydb.commit()
@@ -739,7 +739,7 @@ def staff_management_menu():
     print("[3]View all Staff")
     print("[4]Remove Staff Members")
     print("[0]Exit")
-    opt=input("Enter option :")
+    opt=input("Enter option: ")
     if opt=="1":
         clear_screen()
         Register_Staff()
@@ -759,7 +759,7 @@ def staff_management_menu():
         clear_screen()
         title()
         print(figlet_format("Remove Staff",font="mini"))
-        SId=input("Enter SID of Staff to remove :")
+        SId=input("Enter SID of Staff to remove: ")
         cursor.execute(f"select SID,name,email from staff_details where SID ={SId};")
         data=cursor.fetchone()
         print(tabulate([data],["User ID","Email","password"],tablefmt="fancy_grid"))
@@ -767,7 +767,7 @@ def staff_management_menu():
         if inp.lower()=="y":
             get_Lists("AID",AID_List,"admin_details")
             try:
-                AID=int(input("Enter Your Admin ID :"))
+                AID=int(input("Enter Your Admin ID: "))
             except ValueError:
                 red_text("ID should be a number")
                 staff_management_menu()
@@ -807,7 +807,7 @@ def Customer_Management_menu():
     print("[1]View Customer Records")
     print("[2]Delete Customer Data")
     print("[0]Exit")
-    opt=input("Enter option :")
+    opt=input("Enter option: ")
     if opt=="1":
         cursor.execute("select * from customer_details ;")
         data=cursor.fetchall()
@@ -818,14 +818,14 @@ def Customer_Management_menu():
         Press_Enter()
         Customer_Management_menu()
     elif opt=="2":
-        UId=input("Enter User ID of User to remove :")
+        UId=input("Enter User ID of User to remove: ")
         cursor.execute(f"select UID,name,email from customer_details where UID={UId}")
         info=cursor.fetchone()
         print(tabulate([info],["UID","Name","Email"],tablefmt="fancy_grid"))
         inp=input("Are You sure to remove this User(y/n)")
         if inp.lower()=="y":
             try:
-                AID=int(input("Enter Your Admin ID :"))
+                AID=int(input("Enter Your Admin ID: "))
             except ValueError:
                 red_text("ID should be a number")
             if AID not in AID_List:
