@@ -1,6 +1,5 @@
 import mysql.connector as con
 import csv
-import mysql.connector.errors
 from geopy.geocoders import Nominatim
 from geopy.distance import distance
 from math import ceil
@@ -10,8 +9,6 @@ from maskpass import advpass
 from colorama import Fore,Style
 from pyfiglet import figlet_format
 from datetime import datetime
-
-
 
 UID_List=[]
 SID_List=[]
@@ -37,7 +34,7 @@ def connect():
         cursor.execute("use postoffice;")
         return cursor,mydb,True
     
-    except mysql.connector.errors.ProgrammingError:
+    except con.errors.ProgrammingError:
         return cursor,mydb,False
     
 cursor,mydb,state=connect()
@@ -115,8 +112,8 @@ def track_parcel(info:tuple,Update=False):
                 elif status=="4":
                    updated_status[1],updated_status[2],updated_status[3],updated_status[4]=[1,1,1,1]
                 else:
-                    red_text("Invaild Input!!!\nPress ENTER to Continue")
-                    input
+                    red_text("Invaild Input!!!")
+                    Press_Enter()
                     clear_screen()
                     track_parcel(info,Update)
                 updated_status.append(updated_status[0])
@@ -125,7 +122,7 @@ def track_parcel(info:tuple,Update=False):
                     mydb.commit()
                     green_text("Updated!!!")
                 
-                except mysql.connector.errors:
+                except con.errors:
                     red_text("Something went wrong while updating")
                 Press_Enter()
                 parcel_management_menu()
@@ -429,7 +426,7 @@ def parcel_management_menu():
         To=input("Enter Recievers Address: ")
         From=input("Enter Senders Address: ")
         cursor.execute("select PID from parcel_details order by PID desc;")
-        last_PID=cursor.fetchone()[0]
+        last_PID=cursor.fetchone()
         try:
             current_PID=last_PID+1
         except TypeError:
