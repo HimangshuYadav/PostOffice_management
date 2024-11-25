@@ -1,6 +1,5 @@
 import mysql.connector as con
 import csv
-import mysql.connector.errors
 from geopy.geocoders import Nominatim
 from geopy.distance import distance
 from math import ceil
@@ -11,8 +10,6 @@ from colorama import Fore,Style
 from pyfiglet import figlet_format
 from datetime import datetime
 
-
-
 UID_List=[]
 SID_List=[]
 SEmail_List=[]
@@ -21,26 +18,29 @@ PID_List=[]
 Email_List=[]
 attempts=0
 
-def green_text(text:str):
+def green_text(text:str):   
     print(Fore.GREEN+text+Style.RESET_ALL)
 
 def red_text(text:str):
     print(Fore.RED+text+Style.RESET_ALL)
 
-def connect():
+def blue_text(text:str):
+    print(Fore.BLUE+text+Style.RESET_ALL)
+
+def connect():   
     mydb=con.connect(host="localhost",user="root",passwd="himangshu@1")
     cursor=mydb.cursor()
     try:
         cursor.execute("use postoffice;")
         return cursor,mydb,True
     
-    except mysql.connector.errors.ProgrammingError:
+    except con.errors.ProgrammingError:
         return cursor,mydb,False
     
 cursor,mydb,state=connect()
 
 def Press_Enter():
-    print(Fore.BLUE+"\nPress ENTER to Continue"+Style.RESET_ALL)
+    blue_text("\nPress ENTER to Continue")
     input()
     clear_screen()
 
@@ -65,6 +65,7 @@ def get_Lists(string:str,to_List:list,from_table:str):
             for info in i:
                 to_List.append(info)
         
+
 def next_line(text, line_length=50):
     return '\n'.join(text[i:i + line_length] for i in range(0, len(text), line_length))
  
@@ -111,8 +112,8 @@ def track_parcel(info:tuple,Update=False):
                 elif status=="4":
                    updated_status[1],updated_status[2],updated_status[3],updated_status[4]=[1,1,1,1]
                 else:
-                    red_text("Invaild Input!!!\nPress ENTER to Continue")
-                    input
+                    red_text("Invaild Input!!!")
+                    Press_Enter()
                     clear_screen()
                     track_parcel(info,Update)
                 updated_status.append(updated_status[0])
@@ -121,7 +122,7 @@ def track_parcel(info:tuple,Update=False):
                     mydb.commit()
                     green_text("Updated!!!")
                 
-                except mysql.connector.errors:
+                except con.errors:
                     red_text("Something went wrong while updating")
                 Press_Enter()
                 parcel_management_menu()
@@ -345,7 +346,11 @@ def Customer_Menu():
         clear_screen()
         title()
         print(figlet_format("Postage Calculator",font="mini"))
-        mass=float(input("Enter weight of your parcel(in grams): "))
+        try:
+            mass=float(input("Enter weight of your parcel(in grams): "))
+        except ValueError:
+            red_text("Weight should be in number")
+            Press_Enter()
         sender=input("Enter your address: ")
         receiver=input("Enter the reciever's address: ")
         distance=calculate_distance(sender,receiver)
@@ -421,7 +426,7 @@ def parcel_management_menu():
         To=input("Enter Recievers Address: ")
         From=input("Enter Senders Address: ")
         cursor.execute("select PID from parcel_details order by PID desc;")
-        last_PID=cursor.fetchone()[0]
+        last_PID=cursor.fetchone()
         try:
             current_PID=last_PID+1
         except TypeError:
@@ -696,7 +701,6 @@ def Update_Staff():
     else:
         cursor.execute(f"select * from staff_details where SID={SId};")
         data=cursor.fetchone()
-        # print(data)
         print(tabulate([data],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
         opt=input("Do you want to update this ???(y/n)")
         if opt.upper() =="Y":

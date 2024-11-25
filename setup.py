@@ -2,7 +2,6 @@ import subprocess
 
 def setup():
     try:
-        # Use pip to install packages from the requirements.txt file
         subprocess.check_call(['pip', 'install', '-r', 'requirements.txt'])
         print(f"Packages from {'requirements.txt'} have been installed successfully.")
     except subprocess.CalledProcessError:
