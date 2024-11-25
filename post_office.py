@@ -21,13 +21,16 @@ PID_List=[]
 Email_List=[]
 attempts=0
 
-def green_text(text:str):
+def green_text(text:str):   
     print(Fore.GREEN+text+Style.RESET_ALL)
 
 def red_text(text:str):
     print(Fore.RED+text+Style.RESET_ALL)
 
-def connect():
+def blue_text(text:str):
+    print(Fore.BLUE+text+Style.RESET_ALL)
+
+def connect():   
     mydb=con.connect(host="localhost",user="root",passwd="himangshu@1")
     cursor=mydb.cursor()
     try:
@@ -40,7 +43,7 @@ def connect():
 cursor,mydb,state=connect()
 
 def Press_Enter():
-    print(Fore.BLUE+"\nPress ENTER to Continue"+Style.RESET_ALL)
+    blue_text("\nPress ENTER to Continue")
     input()
     clear_screen()
 
@@ -65,6 +68,7 @@ def get_Lists(string:str,to_List:list,from_table:str):
             for info in i:
                 to_List.append(info)
         
+
 def next_line(text, line_length=50):
     return '\n'.join(text[i:i + line_length] for i in range(0, len(text), line_length))
  
@@ -345,7 +349,11 @@ def Customer_Menu():
         clear_screen()
         title()
         print(figlet_format("Postage Calculator",font="mini"))
-        mass=float(input("Enter weight of your parcel(in grams): "))
+        try:
+            mass=float(input("Enter weight of your parcel(in grams): "))
+        except ValueError:
+            red_text("Weight should be in number")
+            Press_Enter()
         sender=input("Enter your address: ")
         receiver=input("Enter the reciever's address: ")
         distance=calculate_distance(sender,receiver)
@@ -696,7 +704,6 @@ def Update_Staff():
     else:
         cursor.execute(f"select * from staff_details where SID={SId};")
         data=cursor.fetchone()
-        # print(data)
         print(tabulate([data],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
         opt=input("Do you want to update this ???(y/n)")
         if opt.upper() =="Y":
