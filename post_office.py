@@ -20,12 +20,20 @@ attempts=0
 
 def green_text(text:str):   
     print(Fore.GREEN+text+Style.RESET_ALL)
-
+    
 def red_text(text:str):
     print(Fore.RED+text+Style.RESET_ALL)
 
 def blue_text(text:str):
     print(Fore.BLUE+text+Style.RESET_ALL)
+    
+def make_menu(L:list):
+    for i in L:
+        print(Fore.CYAN+f"[{i[0]}]"+Style.RESET_ALL,Fore.LIGHTCYAN_EX+i[1]+Style.RESET_ALL)
+
+def ask_option(text:str):
+    opt=input(Fore.LIGHTMAGENTA_EX+f"Enter your {text} :"+Style.RESET_ALL)
+    return opt
 
 def connect():   
     mydb=con.connect(host="localhost",user="root",passwd="himangshu@1")
@@ -53,7 +61,6 @@ def ask_pass():
         print("Lenght of password should be more than 8\nPress ENTER Try again")
         input()
         ask_pass()
-    
     else:
         return password
 
@@ -65,7 +72,6 @@ def get_Lists(string:str,to_List:list,from_table:str):
             for info in i:
                 to_List.append(info)
         
-
 def next_line(text, line_length=50):
     return '\n'.join(text[i:i + line_length] for i in range(0, len(text), line_length))
  
@@ -97,11 +103,7 @@ def track_parcel(info:tuple,Update=False):
             updated_status=list(info)
             opt=input("Do you want to Update???(y/n) :")
             if opt.upper()=="Y":
-                print("Current Status")
-                print("[1]In Transit")  
-                print("[2]Out For Delivery")  
-                print("[3]Deliverd")  
-                print("[4]Returned")
+                make_menu([(1,"In Transit"),(2,"Out For Delivery"),(3,"Deliverd"),(4,"Returned")])
                 status=input()
                 if status=="1":
                     updated_status[1],updated_status[2],updated_status[3],updated_status[4]=[1,0,0,0]
@@ -126,7 +128,6 @@ def track_parcel(info:tuple,Update=False):
                     red_text("Something went wrong while updating")
                 Press_Enter()
                 parcel_management_menu()
-            
             elif opt.upper()=="N":
                 clear_screen()
                 parcel_management_menu()
@@ -158,8 +159,6 @@ def calculate_distance(location1, location2):
         return distance((location1.latitude,location1.longitude),(location2.latitude,location2.longitude)).meters/1000
     except:
         return 1000
-   
-
 
 def calculate_parcel_cost(distance_km : float, weight_g : float):
     if weight_g <= 500:
@@ -180,11 +179,8 @@ def title():
 def menu():
     title()
     print(figlet_format("Role",font="mini"))
-    print("[1]Customer")
-    print("[2]Staff")
-    print("[3]Admin")
-    print("[0]Exit")
-    role=input("Enter role: ")
+    make_menu([(1,"Customer"),(2,"Staff"),(3,"Admin"),(0,"Exit")])
+    role=ask_option("role")
     if role=="1":
         clear_screen()
         Auth_Customer()
@@ -313,12 +309,8 @@ def Login_Admin():
 def Customer_Menu():
     title()
     print(figlet_format("Menu",font="mini"))
-    print("[1]Track")
-    print("[2]Locate post office") 
-    print("[3]Postage Calculator")
-    print("[4]File Complaint")
-    print("[0]Logout")
-    opt=input("Enter option: ")
+    make_menu([(1,"Track"),(2,"Locate post office"),(3,"Postage Calculator"),(4,"File Complaint"),(0,"Logout")])
+    opt=ask_option("option")
     if opt=="1":
         clear_screen()
         title()
@@ -379,7 +371,10 @@ def Customer_Menu():
             Press_Enter()
             Customer_Menu()
         except Exception:
-            red_text("Compalint too Long")
+            if complainant_ID.isnumeric==False:
+                red_text("Something went wrong")
+            else:
+                red_text("Complaint too long")
             Press_Enter()
             Customer_Menu()
     elif opt=="0":
@@ -393,11 +388,8 @@ def Customer_Menu():
 def Staff_Menu():
     title()
     print(figlet_format("Menu",font="mini"))
-    print("[1]Parcel Management")
-    print("[2]Customer Services")
-    print("[3]Complaint and Query Management")
-    print("[0]Logout")
-    opt=input("Enter option: ")
+    make_menu([(1,"Parcel Management"),(2,"Customer Services"),(3,"Complaint and Query Management"),(0,"Logout")])
+    opt=ask_option("option")
     if opt=="1":
         clear_screen()
         parcel_management_menu()
@@ -418,11 +410,7 @@ def Staff_Menu():
 def parcel_management_menu():
     title()
     print(figlet_format("Parcel Management",font="mini"))
-    print("[1]Register a New Parcel")
-    print("[2]Update Parcel Status")
-    print("[3]Track Parcel by ID")
-    print("[4]View All Parcels by Status")
-    print("[0]Exit")
+    make_menu([(1,"Register a New Parcel"),(2,"Update Parcel Status"),(3,"Track Parcel by ID"),(4,"View All Parcels by Status"),(0,"Exit")])
     opt=input("Enter option: ")
     if opt=="1":
         clear_screen()
@@ -483,12 +471,8 @@ def parcel_management_menu():
         clear_screen()
         title()
         print(figlet_format("View All Parcels by Status",font="mini"))
-        print("[1]In Transit")
-        print("[2]Out for Delivery")
-        print("[3]Deliverd")
-        print("[4]Returned")
-        print("[0]Exit")
-        inp=(input("Enter option: "))
+        make_menu([(1,"In Transit"),(2,"Out for Delivery"),(3,"Deliverd"),(4,"Returned"),(0,"Exit")])
+        inp=ask_option("option")
         if inp=="1":
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=false and delivered=false and returned=false")
             out=cursor.fetchall()
@@ -499,8 +483,7 @@ def parcel_management_menu():
             else:
                 red_text("No data found!!!")
                 Press_Enter()
-                parcel_management_menu()
-                
+                parcel_management_menu()   
         elif inp=="2":
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=false and returned=false")
             out=cursor.fetchall()
@@ -541,11 +524,9 @@ def parcel_management_menu():
             red_text("Invaild Input")
             Press_Enter()
             parcel_management_menu()
-    
     elif opt=="0":
         clear_screen()
         Staff_Menu()
-        
     else:
         red_text("INVAILD INPUT")
         Press_Enter()
@@ -554,10 +535,8 @@ def parcel_management_menu():
 def Customer_service_menu():
     title()
     print(figlet_format("Customer Management",font="mini"))
-    print("[1]Register New Customer")
-    print("[2]Search Customer by ID or Name")
-    print("[0]Exit")
-    opt=input("Enter option: ")
+    make_menu([(1,"Register New Customer"),(2,"Search Customer by ID or Name"),(0,"Exit")])
+    opt=ask_option("option")
     if opt=="1":
         clear_screen()
         Register_Customer(False)
@@ -572,12 +551,10 @@ def Customer_service_menu():
         else:
             red_text("No User found!!!")
             Press_Enter()
-            Customer_service_menu()
-            
+            Customer_service_menu()    
     elif opt=="0":
         clear_screen()
-        Staff_Menu()
-            
+        Staff_Menu()     
     else:
         red_text("INVAILD INPUT")
         Press_Enter()
@@ -586,11 +563,8 @@ def Customer_service_menu():
 def Complaint_menu():
     title()
     print(figlet_format("Complaint Management",font="mini"))
-    print("[1]Register New Complaint")
-    print("[2]View All Complaints")
-    print("[3]Search Complaints by Customer ID")
-    print("[0]Exit")
-    opt=input("Enter option: ")
+    make_menu([(1,"Register New Complaint"),(2,"View All Complaints"),(3,"Search Complaints by Customer ID"),(0,"Exit")])
+    opt=ask_option("option")
     if opt=="1":
         clear_screen()
         title()
@@ -611,8 +585,6 @@ def Complaint_menu():
             red_text("Compalint too Long")
             Press_Enter()
             Complaint_menu()
-
-        
     elif opt=="2":
         clear_screen()
         title()
@@ -638,7 +610,6 @@ def Complaint_menu():
             print(tabulate(info,["Complainant ID","Complainant","Complaint","Date of complaint"],tablefmt="fancy_grid"))
             Press_Enter()
             Complaint_menu()
-            
     elif opt=="0":
         clear_screen()
         Staff_Menu()
@@ -647,14 +618,11 @@ def Complaint_menu():
         Press_Enter()
         Complaint_menu()
         
-
 def Admin_Menu():
     title()
     print(figlet_format("Menu",font="mini"))
-    print("[1]Staff management")
-    print("[2]Customer Management")
-    print("[0]Logout")
-    opt=input("Enter option: ")
+    make_menu([(1,"Staff management"),(2,"Customer Management"),(0,"Logout")])
+    opt=ask_option("option")
     if opt=="1":
         clear_screen()
         staff_management_menu()
@@ -703,17 +671,14 @@ def Update_Staff():
         red_text(f"No Staff found with SID : {SId}\nTry Again")
         Press_Enter()
         Update_Staff()
-        
     else:
         cursor.execute(f"select SID,name,email,passowrd from staff_details where SID={SId};")
         data=cursor.fetchone()
         print(tabulate([data],["Staff ID","Name","Email","password"],tablefmt="fancy_grid"))
         opt=input("Do you want to update this ???(y/n)")
         if opt.upper() =="Y":
-            print("[1]Email")
-            print("[2]Name")
-            print("[3]Password")
-            inp=input("Enter your option: ")
+            make_menu([(1,"Email"),(2,"Name"),(3,"Password")])
+            inp=ask_option("option")
             if inp=="1":
                 New_Email=input("Enter new email: ")
                 try:
@@ -721,8 +686,7 @@ def Update_Staff():
                     mydb.commit()
                     green_text("Updation Successful")
                     Press_Enter()
-                    Admin_Menu()
-                    
+                    Admin_Menu()   
                 except Exception:
                     red_text("Updation Unsuccessful\nTry again")
                     Press_Enter()
@@ -734,8 +698,7 @@ def Update_Staff():
                     mydb.commit()
                     green_text("Updation Successful")
                     Press_Enter()
-                    Admin_Menu()
-                    
+                    Admin_Menu()  
                 except Exception:
                     red_text("Updation Unsuccessful\nTry again")
                     Press_Enter()
@@ -747,8 +710,7 @@ def Update_Staff():
                     mydb.commit()
                     green_text("Updation Successful")
                     Press_Enter()
-                    Admin_Menu()
-                    
+                    Admin_Menu() 
                 except Exception:
                     red_text("Updation Unsuccessful\nTry again")
                     Press_Enter()
@@ -760,12 +722,8 @@ def Update_Staff():
 def staff_management_menu():    
     title()
     print(figlet_format("Staff Management",font="mini"))
-    print("[1]Register New Staff Member")
-    print("[2]Update Staff Information")
-    print("[3]View all Staff")
-    print("[4]Remove Staff Members")
-    print("[0]Exit")
-    opt=input("Enter option: ")
+    make_menu([(1,"Register New Staff Member"),(2,"Update Staff Information"),(3,"View all Staff"),(4,"Remove Staff Members"),(0,"Exit")])
+    opt=ask_option("option")
     if opt=="1":
         clear_screen()
         Register_Staff()
@@ -822,7 +780,6 @@ def staff_management_menu():
             red_text("INVALID INPUT\nTry Again")
             Press_Enter()
             staff_management_menu()
-            
     elif opt=="0":
         clear_screen()
         Admin_Menu()
@@ -830,10 +787,8 @@ def staff_management_menu():
 def Customer_Management_menu():
     title()
     print(figlet_format("Customer Management",font="mini"))
-    print("[1]View Customer Records")
-    print("[2]Delete Customer Data")
-    print("[0]Exit")
-    opt=input("Enter option: ")
+    make_menu([(1,"View Customer Records"),(2,"Delete Customer Data"),(0,"Exit")])
+    opt=ask_option("option")
     if opt=="1":
         cursor.execute("select * from customer_details ;")
         data=cursor.fetchall()
