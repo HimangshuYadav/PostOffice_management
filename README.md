@@ -4,7 +4,6 @@ A terminal-based program to manage post office operations, built using Python an
 ## Features
 * Customer Management: Add, update, delete, and view customer details.
 * Parcel Management: Record details of parcels, including sender, receiver, and tracking information.
-* Transaction Records: Keep track of transactions like postage and delivery charges.
 * Tracking System: Enable parcel tracking by ID.
 Reporting: Generate daily or periodic reports for administrative use.
 

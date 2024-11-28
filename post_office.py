@@ -206,7 +206,7 @@ def Auth_Customer():
     new=input("you are New user???(y/n)")
     if new=="y":
         clear_screen()
-        Register_Customer()
+        Register_Customer(True)
     elif new=="n":
         clear_screen()
         login_Customer()
@@ -236,7 +236,7 @@ def login_Customer():
             Press_Enter()
             login_Customer()
 
-def Register_Customer():
+def Register_Customer(Self=False):
     title()
     print(figlet_format("Register",font="mini"))
     get_Lists("email",Email_List,"customer_details")
@@ -256,8 +256,13 @@ def Register_Customer():
             mydb.commit()
         except Exception:
             red_text("Something Went Wrong")
-        clear_screen()
-        login_Customer()
+        if Self==True:
+            clear_screen()
+            login_Customer()
+        else:
+            green_text("User Registered successfully")
+            Press_Enter()
+            Customer_Management_menu()
 
 def Login_Staff():
     title()
@@ -335,7 +340,7 @@ def Customer_Menu():
         district=input("Enter District: ")
         nearest__po=nearest_po(district)
         if len(nearest__po)!=0:
-            print(tabulate(nearest__po,["officename","pincode","Taluk","Districtname","statename"],tablefmt="fancy_grid"))
+            print(tabulate(nearest__po,["Officename","Pincode","Taluk","District Name","Statename"],tablefmt="fancy_grid"))
             Press_Enter()
             Customer_Menu()
         else:
@@ -372,11 +377,11 @@ def Customer_Menu():
             mydb.commit()
             green_text("Complaint Filed successfully!!!")
             Press_Enter()
-            Complaint_menu()
+            Customer_Menu()
         except Exception:
             red_text("Compalint too Long")
             Press_Enter()
-            Complaint_menu()
+            Customer_Menu()
     elif opt=="0":
         clear_screen()
         menu()
@@ -428,7 +433,7 @@ def parcel_management_menu():
         cursor.execute("select PID from parcel_details order by PID desc;")
         last_PID=cursor.fetchone()
         try:
-            current_PID=last_PID+1
+            current_PID=last_PID[0]+1
         except TypeError:
             current_PID=1
         print(f"Parcel ID :{current_PID}")
@@ -488,7 +493,7 @@ def parcel_management_menu():
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=false and delivered=false and returned=false")
             out=cursor.fetchall()
             if len(out)!=0:
-                print(tabulate(out,["PID","Password","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+                print(tabulate(out,["Parcel ID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
                 Press_Enter()
                 parcel_management_menu()
             else:
@@ -500,7 +505,7 @@ def parcel_management_menu():
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=false and returned=false")
             out=cursor.fetchall()
             if len(out)!=0:
-                print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+                print(tabulate(out,["Parcel ID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
                 Press_Enter()
                 parcel_management_menu()
             else:
@@ -511,7 +516,7 @@ def parcel_management_menu():
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=true and returned=false")
             out=cursor.fetchall()
             if len(out)!=0:
-                print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+                print(tabulate(out,["Parcel ID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
                 Press_Enter()
                 parcel_management_menu()
             else:
@@ -522,7 +527,7 @@ def parcel_management_menu():
             cursor.execute("select PID,sender_add,reciever_add from parcel_details where in_transit=true and out_for_delivery=true and delivered=true and returned=true")
             out=cursor.fetchall()
             if len(out)!=0:
-                print(tabulate(out,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+                print(tabulate(out,["Parcel ID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
                 Press_Enter()
                 parcel_management_menu()
             else:
@@ -555,13 +560,13 @@ def Customer_service_menu():
     opt=input("Enter option: ")
     if opt=="1":
         clear_screen()
-        Register_Customer()
+        Register_Customer(False)
     elif opt=="2":
         UID=input("Enter User ID or email: ")
-        cursor.execute("select * from customer_details where UID=%s or email=%s;",(UID,UID))
+        cursor.execute("select UID,email,name from customer_details where UID=%s or email=%s;",(UID,UID))
         info=cursor.fetchall()
         if len(info)!=0:
-            print(tabulate(info,["PID","Sender Address","Reciever's Address"],tablefmt="fancy_grid"))
+            print(tabulate(info,["UID","Email","Name"],tablefmt="fancy_grid"))
             Press_Enter()
             Customer_service_menu()
         else:
@@ -606,6 +611,7 @@ def Complaint_menu():
             red_text("Compalint too Long")
             Press_Enter()
             Complaint_menu()
+
         
     elif opt=="2":
         clear_screen()
@@ -699,13 +705,14 @@ def Update_Staff():
         Update_Staff()
         
     else:
-        cursor.execute(f"select * from staff_details where SID={SId};")
+        cursor.execute(f"select SID,name,email,passowrd from staff_details where SID={SId};")
         data=cursor.fetchone()
-        print(tabulate([data],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
+        print(tabulate([data],["Staff ID","Name","Email","password"],tablefmt="fancy_grid"))
         opt=input("Do you want to update this ???(y/n)")
         if opt.upper() =="Y":
             print("[1]Email")
             print("[2]Name")
+            print("[3]Password")
             inp=input("Enter your option: ")
             if inp=="1":
                 New_Email=input("Enter new email: ")
@@ -733,7 +740,22 @@ def Update_Staff():
                     red_text("Updation Unsuccessful\nTry again")
                     Press_Enter()
                     Update_Staff()
-
+            elif inp=="3":
+                New_Pass=input("Enter New Password: ")
+                try:
+                    cursor.execute("update staff_details set password=%s where SID=%s",(New_Pass,SId))
+                    mydb.commit()
+                    green_text("Updation Successful")
+                    Press_Enter()
+                    Admin_Menu()
+                    
+                except Exception:
+                    red_text("Updation Unsuccessful\nTry again")
+                    Press_Enter()
+                    Update_Staff()
+        else:
+            Press_Enter()
+            Admin_Menu()
         
 def staff_management_menu():    
     title()
@@ -754,9 +776,9 @@ def staff_management_menu():
         clear_screen()
         title()
         print(figlet_format("View All Staff",font="mini"))
-        cursor.execute("Select * from staff_details;")
+        cursor.execute("Select SID,name,email from staff_details;")
         details=cursor.fetchall()
-        print(tabulate(details,["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
+        print(tabulate(details,["Staff ID","Name","Email"],tablefmt="fancy_grid"))
         Press_Enter()
         Admin_Menu()
     elif opt=="4":
@@ -766,7 +788,7 @@ def staff_management_menu():
         SId=input("Enter SID of Staff to remove: ")
         cursor.execute(f"select SID,name,email from staff_details where SID ={SId};")
         data=cursor.fetchone()
-        print(tabulate([data],["User ID","Email","password"],tablefmt="fancy_grid"))
+        print(tabulate([data],["Staff ID","Email","password"],tablefmt="fancy_grid"))
         inp=input("Are You sure to remove this staff?(y/n)")
         if inp.lower()=="y":
             get_Lists("AID",AID_List,"admin_details")
@@ -823,9 +845,14 @@ def Customer_Management_menu():
         Customer_Management_menu()
     elif opt=="2":
         UId=input("Enter User ID of User to remove: ")
-        cursor.execute(f"select UID,name,email from customer_details where UID={UId}")
-        info=cursor.fetchone()
-        print(tabulate([info],["UID","Name","Email"],tablefmt="fancy_grid"))
+        try:
+            cursor.execute(f"select UID,name,email from customer_details where UID={UId}")
+            info=cursor.fetchone()
+            print(tabulate([info],["UID","Name","Email"],tablefmt="fancy_grid"))
+        except:
+            red_text("User ID don't exists")
+            Press_Enter()
+            Customer_Management_menu()
         inp=input("Are You sure to remove this User(y/n)")
         if inp.lower()=="y":
             try:
@@ -837,7 +864,7 @@ def Customer_Management_menu():
                 Press_Enter()
                 Customer_Management_menu()
             else:
-                cursor.execute(f"select password from customer_details where UID ={UId}")
+                cursor.execute(f"select password from customer_details where UID ={AID}")
                 user_password=cursor.fetchone()[0]
                 password=ask_pass()
                 if user_password==password:
@@ -871,4 +898,3 @@ if __name__=="__main__" and state==True:
     
 if __name__=="__main__" and state==False:
     red_text("Please run the setup File First")
-   
