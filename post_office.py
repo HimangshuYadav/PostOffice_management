@@ -563,7 +563,11 @@ def Customer_service_menu():
         Register_Customer(False)
     elif opt=="2":
         UID=input("Enter User ID or email: ")
+
         cursor.execute("select UID,email,name from customer_details where UID=%s or email=%s;",(UID,UID))
+
+        cursor.execute("select * from customer_details where UID=%s or email=%s;",(UID,UID))
+
         info=cursor.fetchall()
         if len(info)!=0:
             print(tabulate(info,["UID","Email","Name"],tablefmt="fancy_grid"))
@@ -707,12 +711,18 @@ def Update_Staff():
     else:
         cursor.execute(f"select SID,name,email,passowrd from staff_details where SID={SId};")
         data=cursor.fetchone()
+
         print(tabulate([data],["Staff ID","Name","Email","password"],tablefmt="fancy_grid"))
+
+        print(tabulate([data],["Staff ID","password","Name","Email"],tablefmt="fancy_grid"))
+
         opt=input("Do you want to update this ???(y/n)")
         if opt.upper() =="Y":
             print("[1]Email")
             print("[2]Name")
+
             print("[3]Password")
+
             inp=input("Enter your option: ")
             if inp=="1":
                 New_Email=input("Enter new email: ")
@@ -845,6 +855,7 @@ def Customer_Management_menu():
         Customer_Management_menu()
     elif opt=="2":
         UId=input("Enter User ID of User to remove: ")
+
         try:
             cursor.execute(f"select UID,name,email from customer_details where UID={UId}")
             info=cursor.fetchone()
@@ -853,6 +864,11 @@ def Customer_Management_menu():
             red_text("User ID don't exists")
             Press_Enter()
             Customer_Management_menu()
+
+        cursor.execute(f"select UID,name,email from customer_details where UID={UId}")
+        info=cursor.fetchone()
+        print(tabulate([info],["UID","Name","Email"],tablefmt="fancy_grid"))
+
         inp=input("Are You sure to remove this User(y/n)")
         if inp.lower()=="y":
             try:
@@ -897,4 +913,9 @@ if __name__=="__main__" and state==True:
     menu()
     
 if __name__=="__main__" and state==False:
+
     red_text("Please run the setup File First")
+
+    red_text("Please run the setup File First")
+   
+
