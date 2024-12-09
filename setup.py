@@ -1,4 +1,5 @@
 import subprocess
+import pickle
 
 def setup():
     try:
@@ -11,11 +12,10 @@ def setup():
         
     import mysql.connector
     from colorama import Fore,Style
-
-
-    mydb=mysql.connector.connect(host="localhost",user="root",passwd="")
+    password=get_pass()
+    mydb=mysql.connector.connect(host="localhost",user="root",passwd=password)
     cursor=mydb.cursor()
-    cursor.execute("create database if not exists postoffice;")
+    cursor.execute("create database postoffice;")
     cursor.execute("use postoffice;")
     cursor.execute("create table Customer_details(UID int primary key,password varchar(50),name varchar(50),email varchar(50));")
     cursor.execute("create table parcel_details(PID int primary key,in_transit boolean default False, out_for_delivery boolean default False,delivered boolean default False,returned boolean default False, sender_add varchar(20), reciever_add varchar(20));")
@@ -26,5 +26,13 @@ def setup():
     mydb.commit()
     print(Fore.GREEN+"SetUp Successful"+Style.RESET_ALL)
     
-if __name__=="__main__":
-    setup()
+def get_pass():
+    with open("password.dat","rb+") as f:
+        try:
+            password=pickle.load(f)
+        except EOFError:
+            password=input("Enter Your sql password :")
+            pickle.dump(password,f)
+    return password
+
+
