@@ -1,14 +1,22 @@
-import mysql.connector as con
-import csv
-from geopy.geocoders import Nominatim
-from geopy.distance import distance
-from math import ceil
-from tabulate import tabulate
-import os
-from maskpass import advpass
-from colorama import Fore,Style
-from pyfiglet import figlet_format
-from datetime import datetime
+try:
+    import setup
+    import mysql.connector as con
+    import csv
+    from geopy.geocoders import Nominatim
+    from geopy.distance import distance
+    from math import ceil
+    from tabulate import tabulate
+    import os
+    import pickle
+    from maskpass import advpass
+    from colorama import Fore,Style
+    from pyfiglet import figlet_format
+    from datetime import datetime
+    state=True
+except ModuleNotFoundError:
+    state=False
+    
+
 
 UID_List=[]
 SID_List=[]
@@ -17,6 +25,10 @@ AID_List=[]
 PID_List=[]
 Email_List=[]
 attempts=0
+def get_password():
+    with open("password.dat","rb") as f:
+        password=pickle.load(f)
+        return password
 
 def green_text(text:str):   
     print(Fore.GREEN+text+Style.RESET_ALL)
@@ -35,8 +47,8 @@ def ask_option(text:str):
     opt=input(Fore.LIGHTMAGENTA_EX+f"Enter your {text} :"+Style.RESET_ALL)
     return opt
 
-def connect():   
-    mydb=con.connect(host="localhost",user="root",passwd="himangshu@1")
+def connect():  
+    mydb=con.connect(host="localhost",user="root",passwd=get_password())
     cursor=mydb.cursor()
     try:
         cursor.execute("use postoffice;")
@@ -44,8 +56,9 @@ def connect():
     
     except con.errors.ProgrammingError:
         return cursor,mydb,False
-    
-cursor,mydb,state=connect()
+
+if state==True:   
+    cursor,mydb,state=connect()
 
 def Press_Enter():
     blue_text("\nPress ENTER to Continue")
@@ -170,7 +183,7 @@ def calculate_parcel_cost(distance_km : float, weight_g : float):
     try:
         cost = 10+rate_per_km * distance_km
         return ceil(cost/100)
-    except TypeError:
+    except:
         return 100
 
 def title():
@@ -852,4 +865,7 @@ if __name__=="__main__" and state==True:
     menu()
     
 if __name__=="__main__" and state==False:
-    red_text("Please run the setup File First")
+    print("Running Setup File")
+    setup.setup()
+    print("Setup Successful\nRestart the program")
+    
