@@ -17,12 +17,10 @@ except ModuleNotFoundError:
     state=False
     
 
-
-UID_List=[]
-SID_List=[]
+Sid_List=[]
 SEmail_List=[]
-AID_List=[]
-PID_List=[]
+Aid_List=[]
+Pid_List=[]
 Email_List=[]
 attempts=0
 def get_password():
@@ -255,7 +253,7 @@ def Register_Customer(Self=False):
         login_Customer()
     else:
         password=ask_pass()
-        name=input("What should we call you??? :")
+        name=input("Enter Your name:")
         Userid=get_UID("customer_details","UID")
         print("This is your UserId:",Userid)
         while cursor.nextset():
@@ -267,7 +265,7 @@ def Register_Customer(Self=False):
             red_text("Something Went Wrong")
         if Self==True:
             clear_screen()
-            login_Customer()
+            Customer_Menu()
         else:
             green_text("User Registered successfully")
             Press_Enter()
@@ -295,7 +293,7 @@ def Login_Staff():
             Login_Staff()
 
 def Login_Admin():
-    get_Lists("AID",AID_List,"admin_details")
+    get_Lists("AID",Aid_List,"admin_details")
     title()
     print(figlet_format("Login",font="mini"))
     try:
@@ -303,7 +301,7 @@ def Login_Admin():
     except ValueError:
         red_text("ID should be a number!")
         Login_Admin()
-    if AID not in AID_List:
+    if AID not in Aid_List:
         red_text("Incorrect Admin ID...")
         Press_Enter()
         menu()
@@ -449,7 +447,7 @@ def parcel_management_menu():
         parcel_management_menu()
         
     elif opt=="2":
-        get_Lists("PID",PID_List,"parcel_details")
+        get_Lists("PID",Pid_List,"parcel_details")
         clear_screen()
         title()
         print(figlet_format("Update Parcel Status",font="mini"))
@@ -458,7 +456,7 @@ def parcel_management_menu():
         except ValueError:
             red_text("ID should be a number")
             parcel_management_menu()
-        if PID not in PID_List:
+        if PID not in Pid_List:
             red_text("INCORRECT ID!!!")
             Press_Enter()
             parcel_management_menu()
@@ -674,18 +672,18 @@ def Register_Staff():
         
 def Update_Staff():
     title()
-    get_Lists("SID",SID_List,"staff_details")
+    get_Lists("SID",Sid_List,"staff_details")
     try:
         SId=int(input("Enter the Staff ID: "))
     except ValueError:
         print("ID should be a number")
         Update_Staff()
-    if SId not in SID_List:
+    if SId not in Sid_List:
         red_text(f"No Staff found with SID : {SId}\nTry Again")
         Press_Enter()
         Update_Staff()
     else:
-        cursor.execute(f"select SID,name,email,passowrd from staff_details where SID={SId};")
+        cursor.execute(f"select SID,name,email,password from staff_details where SID={SId};")
         data=cursor.fetchone()
         print(tabulate([data],["Staff ID","Name","Email","password"],tablefmt="fancy_grid"))
         opt=input("Do you want to update this ???(y/n)")
@@ -728,9 +726,9 @@ def Update_Staff():
                     red_text("Updation Unsuccessful\nTry again")
                     Press_Enter()
                     Update_Staff()
-        else:
-            Press_Enter()
-            Admin_Menu()
+            else:
+                Press_Enter()
+                Admin_Menu()
         
 def staff_management_menu():    
     title()
@@ -762,13 +760,13 @@ def staff_management_menu():
         print(tabulate([data],["Staff ID","Email","password"],tablefmt="fancy_grid"))
         inp=input("Are You sure to remove this staff?(y/n)")
         if inp.lower()=="y":
-            get_Lists("AID",AID_List,"admin_details")
+            get_Lists("AID",Aid_List,"admin_details")
             try:
                 AID=int(input("Enter Your Admin ID: "))
             except ValueError:
                 red_text("ID should be a number")
                 staff_management_menu()
-            if AID not in AID_List:
+            if AID not in Aid_List:
                 red_text("Incorrect Admin ID")
                 Press_Enter()
                 Admin_Menu()
@@ -827,7 +825,7 @@ def Customer_Management_menu():
                 AID=int(input("Enter Your Admin ID: "))
             except ValueError:
                 red_text("ID should be a number")
-            if AID not in AID_List:
+            if AID not in Aid_List:
                 red_text("Incorrect Admin ID")
                 Press_Enter()
                 Customer_Management_menu()
