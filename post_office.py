@@ -24,9 +24,18 @@ Pid_List=[]
 Email_List=[]
 attempts=0
 def get_password():
-    with open("password.dat","rb") as f:
-        password=pickle.load(f)
-        return password
+    with open("password.dat","rb+") as f:
+        try:
+            password=pickle.load(f)
+        except EOFError:
+            password=input("Enter your sql password :")
+            pickle.dump(password,f)
+    return password
+
+def change_pass():
+    with open("password.dat","wb") as f:
+        password=input("Enter your sql password :")
+        pickle.dump(password,f)
 
 def green_text(text:str):   
     print(Fore.GREEN+text+Style.RESET_ALL)
@@ -45,9 +54,15 @@ def ask_option(text:str):
     opt=input(Fore.LIGHTMAGENTA_EX+f"Enter your {text} :"+Style.RESET_ALL)
     return opt
 
-def connect():  
-    mydb=con.connect(host="localhost",user="root",passwd=get_password())
-    cursor=mydb.cursor()
+def connect(): 
+    try: 
+        global cursor,mydb
+        mydb=con.connect(host="localhost",user="root",passwd=get_password())
+        cursor=mydb.cursor()
+    except con.errors.ProgrammingError:
+        red_text("Incorrect sql password")
+        change_pass()
+        connect()
     try:
         cursor.execute("use postoffice;")
         return cursor,mydb,True
@@ -250,16 +265,19 @@ def Register_Customer(Self=False):
     email=input("Enter Email: ")
     if email in Email_List:
         print("User already exist...moving to login page..")
-        login_Customer()
+        login_Customer() 
     else:
         password=ask_pass()
         name=input("Enter Your name:")
+        dob=input("Enter your date of birth :")
+        add=input("Enter your address :")
+        contact_no=int(input("Enter your contact number"))
         Userid=get_UID("customer_details","UID")
         print("This is your UserId:",Userid)
         while cursor.nextset():
             cursor.fetchall()
         try:
-            cursor.execute("INSERT INTO customer_details (UID, email, password,name) VALUES (%s, %s, %s,%s)", (Userid, email, password,name))
+            cursor.execute("INSERT INTO customer_details (UID,name, email, password,dob,address,contact_number) VALUES (%s, %s, %s,%s,%s,%s)", (Userid,name, email, password,dob,add,contact_no))
             mydb.commit()
         except Exception:
             red_text("Something Went Wrong")
@@ -553,10 +571,10 @@ def Customer_service_menu():
         Register_Customer(False)
     elif opt=="2":
         UID=input("Enter User ID or email: ")
-        cursor.execute("select UID,email,name from customer_details where UID=%s or email=%s;",(UID,UID))
+        cursor.execute("select UID,name,email,dob,address,contact_number from customer_details where UID=%s or email=%s;",(UID,UID))
         info=cursor.fetchall()
         if len(info)!=0:
-            print(tabulate(info,["UID","Email","Name"],tablefmt="fancy_grid"))
+            print(tabulate(info,["UID","Name","Email","Date of Birth","Address","Contact Number"],tablefmt="fancy_grid"))
             Press_Enter()
             Customer_service_menu()
         else:
@@ -659,10 +677,13 @@ def Register_Staff():
     else:
         password=ask_pass()
         name=input("Enter the name of Employee: ")
+        des=input("Enter Designation :")
+        Branch_loc=input("Enter Branch Location :")
+        doj=datetime.now().strftime('%Y-%m-%d')
         SID=get_UID("staff_details","SID")
         cursor.fetchall()
         try:
-            cursor.execute("insert into staff_details values(%s,%s,%s,%s);",(SID,password,name,email))
+            cursor.execute("insert into staff_details values(%s,%s,%s,%s,%s,%s,%s);",(SID,name,email,password,des,Branch_loc,doj))
             mydb.commit()
             print("This is your Staff Id :",SID)
         except:
@@ -683,52 +704,42 @@ def Update_Staff():
         Press_Enter()
         Update_Staff()
     else:
-        cursor.execute(f"select SID,name,email,password from staff_details where SID={SId};")
+        cursor.execute(f"select SID,name,email,password,Designation,branch_loc from staff_details where SID={SId};")
         data=cursor.fetchone()
-        print(tabulate([data],["Staff ID","Name","Email","password"],tablefmt="fancy_grid"))
+        print(tabulate([data],["Staff ID","Name","Email","password","Designation","Branch Location"],tablefmt="fancy_grid"))
         opt=input("Do you want to update this ???(y/n)")
         if opt.upper() =="Y":
-            make_menu([(1,"Email"),(2,"Name"),(3,"Password")])
+            make_menu([(1,"Email"),(2,"Name"),(3,"Password"),(4,"Designation"),(5,"Branch Location")])
             inp=ask_option("option")
             if inp=="1":
-                New_Email=input("Enter new email: ")
-                try:
-                    cursor.execute("update staff_details set email=%s where SID=%s",(New_Email,SId))
-                    mydb.commit()
-                    green_text("Updation Successful")
-                    Press_Enter()
-                    Admin_Menu()   
-                except Exception:
-                    red_text("Updation Unsuccessful\nTry again")
-                    Press_Enter()
-                    Update_Staff()
+                update_data("email",SId,"email")
             elif inp=="2":
-                New_Name=input("Enter Updated name: ")
-                try:
-                    cursor.execute("update staff_details set name=%s where SID=%s",(New_Name,SId))
-                    mydb.commit()
-                    green_text("Updation Successful")
-                    Press_Enter()
-                    Admin_Menu()  
-                except Exception:
-                    red_text("Updation Unsuccessful\nTry again")
-                    Press_Enter()
-                    Update_Staff()
+                update_data("name",SId,"name")
             elif inp=="3":
-                New_Pass=input("Enter New Password: ")
-                try:
-                    cursor.execute("update staff_details set password=%s where SID=%s",(New_Pass,SId))
-                    mydb.commit()
-                    green_text("Updation Successful")
-                    Press_Enter()
-                    Admin_Menu() 
-                except Exception:
-                    red_text("Updation Unsuccessful\nTry again")
-                    Press_Enter()
-                    Update_Staff()
+                update_data("password",SId,"password")
+            elif inp=="4":
+                update_data("Designation",SId,"Designation")
+            elif inp=="4":
+                update_data("Branch_loc",SId,"Branch location")
             else:
                 Press_Enter()
                 Admin_Menu()
+        elif opt.lower()=="n":
+            Admin_Menu()
+
+def update_data(att,sid,what:str):
+    New_Email=input(f"Enter new {what}: ")
+    try:
+        qry="update staff_details set "+att+f" = '{New_Email}' where SID="+str(sid)
+        cursor.execute(qry)
+        mydb.commit()
+        green_text("Updation Successful")
+        Press_Enter()
+        Admin_Menu()   
+    except Exception:
+        red_text("Updation Unsuccessful\nTry again")
+        Press_Enter()
+        Update_Staff()
         
 def staff_management_menu():    
     title()
@@ -749,7 +760,7 @@ def staff_management_menu():
         details=cursor.fetchall()
         print(tabulate(details,["Staff ID","Name","Email"],tablefmt="fancy_grid"))
         Press_Enter()
-        Admin_Menu()
+        staff_management_menu()
     elif opt=="4":
         clear_screen()
         title()
@@ -769,7 +780,7 @@ def staff_management_menu():
             if AID not in Aid_List:
                 red_text("Incorrect Admin ID")
                 Press_Enter()
-                Admin_Menu()
+                staff_management_menu()
             else:
                 cursor.execute(f"select password from admin_details where AID ={AID}")
                 user_password=cursor.fetchone()[0]
@@ -779,14 +790,14 @@ def staff_management_menu():
                     mydb.commit()
                     green_text("Staff deleted Successfully")
                     Press_Enter()
-                    Admin_Menu()
+                    staff_management_menu()
                 else:
                     red_text("Wrong password...")
                     Press_Enter()
                     staff_management_menu()
         elif inp.lower()=="n":
             Press_Enter()
-            Admin_Menu()
+            staff_management_menu()
         else:
             red_text("INVALID INPUT\nTry Again")
             Press_Enter()
@@ -801,10 +812,10 @@ def Customer_Management_menu():
     make_menu([(1,"View Customer Records"),(2,"Delete Customer Data"),(0,"Exit")])
     opt=ask_option("option")
     if opt=="1":
-        cursor.execute("select * from customer_details ;")
+        cursor.execute("select UID,name,email,dob,address,contact_number from customer_details;")
         data=cursor.fetchall()
         if len(data)!=0:
-            print(tabulate(data,["User ID","password","name","email"],tablefmt="fancy_grid"))
+            print(tabulate(data,["User ID","Name","Email","Date of Birth","Address","Contact Number"],tablefmt="fancy_grid"))
         else:
             red_text("There is No Customer Registered")
         Press_Enter()
