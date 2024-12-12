@@ -31,7 +31,8 @@ def get_pass():
         try:
             password=pickle.load(f)
         except EOFError:
-            password=input("Enter Your sql password :")
+            from maskpass import advpass
+            password=advpass("Enter your SQL password :")
             pickle.dump(password,f)
     return password
 

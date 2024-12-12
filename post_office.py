@@ -220,6 +220,8 @@ def menu():
         pass
     else:
         red_text("INVAILD INPUT TRY AGAIN")
+        Press_Enter()
+        clear_screen()
         menu()
      
 def Auth_Customer():
@@ -268,26 +270,27 @@ def Register_Customer(Self=False):
         login_Customer() 
     else:
         password=ask_pass()
-        name=input("Enter Your name:")
-        dob=input("Enter your date of birth :")
+        name=input("Enter name:")
+        dob=input("Enter your date of birth (yyyy-mm-dd):")
         add=input("Enter your address :")
-        contact_no=int(input("Enter your contact number"))
+        contact_no=int(input("Enter your contact number :"))
         Userid=get_UID("customer_details","UID")
-        print("This is your UserId:",Userid)
         while cursor.nextset():
             cursor.fetchall()
         try:
-            cursor.execute("INSERT INTO customer_details (UID,name, email, password,dob,address,contact_number) VALUES (%s, %s, %s,%s,%s,%s)", (Userid,name, email, password,dob,add,contact_no))
+            cursor.execute("INSERT INTO customer_details (UID,name, email, password,dob,address,contact_number) VALUES (%s, %s, %s,%s,%s,%s,%s)", (Userid,name, email, password,dob,add,contact_no))
             mydb.commit()
+            print("This is your UserId:",Userid)
+            green_text("User Registered successfully")
         except Exception:
             red_text("Something Went Wrong")
         if Self==True:
+            Press_Enter()
             clear_screen()
             Customer_Menu()
         else:
-            green_text("User Registered successfully")
             Press_Enter()
-            Customer_Management_menu()
+            Customer_service_menu()
 
 def Login_Staff():
     title()
@@ -719,9 +722,10 @@ def Update_Staff():
                 update_data("password",SId,"password")
             elif inp=="4":
                 update_data("Designation",SId,"Designation")
-            elif inp=="4":
+            elif inp=="5":
                 update_data("Branch_loc",SId,"Branch location")
             else:
+                red_text("Invaild Input")
                 Press_Enter()
                 Admin_Menu()
         elif opt.lower()=="n":
@@ -756,9 +760,9 @@ def staff_management_menu():
         clear_screen()
         title()
         print(figlet_format("View All Staff",font="mini"))
-        cursor.execute("Select SID,name,email from staff_details;")
+        cursor.execute("Select SID,name,email,Designation,Branch_loc,DOJ from staff_details;")
         details=cursor.fetchall()
-        print(tabulate(details,["Staff ID","Name","Email"],tablefmt="fancy_grid"))
+        print(tabulate(details,["Staff ID","Name","Email","Designation","Branch Location","Date of Joining"],tablefmt="fancy_grid"))
         Press_Enter()
         staff_management_menu()
     elif opt=="4":
@@ -877,4 +881,3 @@ if __name__=="__main__" and state==False:
     print("Running Setup File")
     setup.setup()
     print("Setup Successful\nRestart the program")
-    
